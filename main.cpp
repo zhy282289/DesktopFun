@@ -37,12 +37,7 @@ void LoadWindow()
 
 	if (infoList.isEmpty())
 	{
-		Controller *controller = new Controller;
-		DesktopWindow *window = new DesktopWindow;
-		controller->Load("", window);
-		window->SetController(controller);
-		window->resize(500, 500);
-		window->show();
+		CreateNewDesktopWindow();
 	}
 
 }

@@ -17,6 +17,7 @@ DesktopWindow::DesktopWindow( QWidget *parent)
 
 	::SetParent(winId(), FindDesktopWnd());
 
+
 	// animation
 	m_animateWindow = new QPropertyAnimation(this, "pos", this);
 	m_animateWindow->setDuration(1000);
@@ -33,6 +34,8 @@ DesktopWindow::DesktopWindow( QWidget *parent)
 	m_bWindowHadMove = false;
 	m_windowHadHide = settings.value("WindowHadHide", false).toBool();
 
+	m_outside = 1;
+
 	m_iconSize = QSize(80, 80);
 	m_bgColor = QColor(0, 0, 250, 80);
 
@@ -47,11 +50,14 @@ DesktopWindow::DesktopWindow( QWidget *parent)
 	m_actAnchor->setCheckable(true);
 	m_actAnchor->setChecked(!m_bWindowCanMove);
 
-	
+	m_actAddNewWindow = new QAction("增加新窗口", this);
+	m_actSetting = new QAction("设置", this);
+
 	connect(m_actAddFile, SIGNAL(triggered()), this, SLOT(SlotActTriggered()));
 	connect(m_actAddDir, SIGNAL(triggered()), this, SLOT(SlotActTriggered()));
 	connect(m_actAnchor, SIGNAL(triggered()), this, SLOT(SlotActTriggered()));
-
+	connect(m_actAddNewWindow, SIGNAL(triggered()), this, SLOT(SlotActTriggered()));
+	connect(m_actSetting, SIGNAL(triggered()), this, SLOT(SlotActTriggered()));
 }
 
 DesktopWindow::~DesktopWindow()
@@ -80,14 +86,15 @@ void DesktopWindow::paintEvent( QPaintEvent *event )
 	}
 	else
 	{
-		QPixmap desktopPixmap = QueryDesktopPixmap();
-		QRect srctRect = geometry();
-		QRect destRect = rect();
-		srctRect.moveTopLeft(QPoint(srctRect.topLeft().x(), 0));
-		
+		//QPixmap desktopPixmap = QueryDesktopPixmap();
+		//QRect srctRect = geometry();
+		//QRect destRect = rect();
+		//srctRect.moveTopLeft(QPoint(srctRect.topLeft().x(), 0));
 		QPainter painter(this);
-		painter.drawPixmap(destRect, desktopPixmap, srctRect);
-		painter.fillRect(rect(), QBrush(m_bgColor));
+		//painter.drawPixmap(destRect, desktopPixmap, srctRect);
+		QColor color = m_bgColor;
+		color.setAlpha(250);
+		painter.fillRect(rect(), QBrush(color));
 	}
 
 }
@@ -140,7 +147,7 @@ void DesktopWindow::mouseMoveEvent( QMouseEvent *event )
 		update();
 		m_bWindowHadMove = true;
 	}
-	else if (m_bWindowCanMove)
+	else if (m_bWindowCanMove && !m_windowHadHide)
 	{
 		HitSide(event);
 	}
@@ -150,7 +157,7 @@ void DesktopWindow::mouseMoveEvent( QMouseEvent *event )
 
 void DesktopWindow::showEvent( QShowEvent *event )
 {
-
+	QueryDesktopPixmap();
 }
 
 void DesktopWindow::HitSide( QMouseEvent *event )
@@ -252,6 +259,14 @@ void DesktopWindow::SlotActTriggered()
 		settings.setValue("WindowCanMove", m_bWindowCanMove);
 		settings.setValue("ItemCanMove", m_bItemCanMove);
 	}
+	else if (m_actAddNewWindow == obj)
+	{
+		CreateNewDesktopWindow();
+	}
+	else if (m_actSetting == obj)
+	{
+
+	}
 }
 
 void DesktopWindow::contextMenuEvent( QContextMenuEvent *event )
@@ -265,6 +280,8 @@ void DesktopWindow::contextMenuEvent( QContextMenuEvent *event )
 	menu.addAction(m_actAddDir);
 	menu.addSeparator();
 	menu.addAction(m_actAnchor);
+	menu.addAction(m_actAddNewWindow);
+	menu.addAction(m_actSetting);
 
 	m_actAddFile->setData(event->pos());
 	m_actAddDir->setData(event->pos());
@@ -329,7 +346,6 @@ void DesktopWindow::SaveDesk()
 
 void DesktopWindow::Show()
 {
-
 	setGeometry(m_controller->GetDesktopWindowData().rect);
 	show();
 }
@@ -346,10 +362,11 @@ void DesktopWindow::enterEvent( QEvent *event )
 
 void DesktopWindow::HideOrShowWindow( bool hide )
 {
+	QRect screenGeometry = qApp->desktop()->availableGeometry();
 	bool left = geometry().x() <= 0;
 	bool top = geometry().y() <= 0;
-	bool right = geometry().right() >= qApp->desktop()->availableGeometry().width();
-	bool bottom = geometry().y() >= qApp->desktop()->availableGeometry().height();
+	bool right = geometry().right() >= screenGeometry.width();
+	bool bottom = geometry().bottomLeft().y() >= screenGeometry.height();
 
 	if (!left && !top && !right && !bottom)
 		return;
@@ -358,17 +375,18 @@ void DesktopWindow::HideOrShowWindow( bool hide )
 	QSettings settings("DesktopWindow.ini", QSettings::IniFormat);
 	settings.setValue("WindowHadHide", m_windowHadHide);
 
-	const int outside = 5;
+	
+	
 
 	int ileft = geometry().x();
 	int itop = geometry().y();
-	int iright = qApp->desktop()->availableGeometry().width() - geometry().right();
-	int ibottom = qApp->desktop()->availableGeometry().height() - geometry().y();
+	int iright = screenGeometry.width() - geometry().right();
+	int ibottom = screenGeometry.height() - geometry().bottomLeft().y() ;
 
-	left = ileft < itop && ileft < ibottom;
-	top = itop < ileft && itop < iright;
-	right = iright < itop && ibottom;
-	bottom= ibottom < iright && ibottom < ileft;
+	left = ileft < itop && ileft < ibottom && ileft < iright;
+	top = itop < ileft && itop < iright && itop < ibottom;
+	right = iright < itop && iright < ibottom && iright < ileft;
+	bottom= ibottom < iright && ibottom < ileft && ibottom < itop;
 	if (hide)
 	{
 		//  隐藏窗体动画
@@ -376,57 +394,60 @@ void DesktopWindow::HideOrShowWindow( bool hide )
 		if (left)
 		{
 			m_animateWindow->setStartValue(pos);
-			m_animateWindow->setEndValue(QPoint(-geometry().width() + outside, pos.y()));
+			m_animateWindow->setEndValue(QPoint(-geometry().width() + m_outside, pos.y()));
 			m_animateWindow->start();
+			//m_handleWidget->Move(QPoint(0, 100));
 		}
 		else if (top)
 		{
 			m_animateWindow->setStartValue(pos);
-			m_animateWindow->setEndValue(QPoint(pos.x(), -geometry().height() + outside));
+			m_animateWindow->setEndValue(QPoint(pos.x(), -geometry().height() + m_outside));
 			m_animateWindow->start();
 		}
 		else if (right)
 		{
 			m_animateWindow->setStartValue(pos);
-			m_animateWindow->setEndValue(QPoint(qApp->desktop()->availableGeometry().width() - outside, pos.y()));
+			m_animateWindow->setEndValue(QPoint(screenGeometry.width() - m_outside, pos.y()));
 			m_animateWindow->start();
 		}
-		else if (bottom)
-		{
-			m_animateWindow->setStartValue(pos);
-			m_animateWindow->setEndValue(QPoint(pos.x(), qApp->desktop()->availableGeometry().height() - 50));
-			m_animateWindow->start();
-		}
+		//else if (bottom)
+		//{
+		//	m_animateWindow->setStartValue(pos);
+		//	m_animateWindow->setEndValue(QPoint(pos.x(), screenGeometry.height()-5));
+		//	m_animateWindow->start();
+		//}
 	}
 	else 
 	{
 		QPoint pos = geometry().topLeft();
 		if (left)
 		{
+			
 			m_animateWindow->setStartValue(pos);
-			m_animateWindow->setEndValue(QPoint(-outside, pos.y()));
+			m_animateWindow->setEndValue(QPoint(qMin(-m_outside, screenGeometry.width() - geometry().width()), pos.y()));
 			m_animateWindow->start();
 		}
 		else if (top)
 		{
 			m_animateWindow->setStartValue(pos);
-			m_animateWindow->setEndValue(QPoint(pos.x(), -outside));
+			m_animateWindow->setEndValue(QPoint(pos.x(), qMin(-m_outside, screenGeometry.height() - geometry().height())));
 			m_animateWindow->start();
 		}
 		else if (right)
 		{
 			m_animateWindow->setStartValue(pos);
-			m_animateWindow->setEndValue(QPoint(qApp->desktop()->availableGeometry().width() - geometry().width() + outside, pos.y()));
+			m_animateWindow->setEndValue(QPoint(qMax(0, screenGeometry.width() - geometry().width() + m_outside), pos.y()));
 			m_animateWindow->start();
 		}
-		else if (bottom)
-		{
-			m_animateWindow->setStartValue(pos);
-			m_animateWindow->setEndValue(QPoint(pos.x(), qApp->desktop()->availableGeometry().height() - geometry().height() + outside));
-			m_animateWindow->start();
-		}
+		//else if (bottom)
+		//{
+		//	m_animateWindow->setStartValue(pos);
+		//	m_animateWindow->setEndValue(QPoint(pos.x(), qMax(0, screenGeometry.height() - geometry().height()) + m_outside));
+		//	m_animateWindow->start();
+		//}
 	}
 
+	setFocus();
 }
 
 bool DesktopWindow::WillHideWindow()
@@ -480,7 +501,7 @@ void DesktopWindow::keyPressEvent( QKeyEvent *event )
 
 void DesktopWindow::focusOutEvent( QFocusEvent *event )
 {
-	HideOrShowWindow(true);
+	//HideOrShowWindow(true);
 }
 
 void DesktopWindow::focusInEvent( QFocusEvent *event )
@@ -508,4 +529,40 @@ QDataStream &operator<<(QDataStream &out, const DesktopWindowData &data)
 QDataStream &operator>>(QDataStream &in, DesktopWindowData &data)
 {
 	return in >> data.rect;
+}
+
+HandleWidget::HandleWidget( QWidget *parent /*= NULL*/ )
+	:QWidget(parent)
+{
+	setWindowFlags(Qt::FramelessWindowHint);
+	setFixedSize(15, 30);
+	setFocusPolicy(Qt::NoFocus);
+	m_bgColor = QColor(0, 250, 250, 50);
+}
+
+void HandleWidget::paintEvent( QPaintEvent *event )
+{
+	QPixmap desktopPixmap = QueryDesktopPixmap();
+	QRect srctRect = geometry();
+	QRect destRect = rect();
+	QPainter painter(this);
+	painter.drawPixmap(destRect, desktopPixmap, srctRect);
+	painter.fillRect(rect(), QBrush(m_bgColor));
+}
+
+void HandleWidget::mousePressEvent( QMouseEvent *event )
+{
+	Hide();
+	emit clicked();
+}
+
+void HandleWidget::Move( QPoint point )
+{
+	move(point);
+	show();
+}
+
+void HandleWidget::Hide()
+{
+	hide();
 }

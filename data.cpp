@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "data.h"
 
+#include "controller.h"
+#include "desktopfun.h"
 
 #include <shellapi.h>
 
@@ -85,23 +87,49 @@ QString GetDefaultSaveDeskName()
 	QFileInfoList infoList = dir.entryInfoList(QStringList() << "*.desk", QDir::Files);
 	
 	QString defaultName("default_0.desk");
+	
 	int num = 1;
+	while(1)
 	{
+		bool exitsDefaultName = false;
 		for (int i = 0; i < infoList.size(); ++i)
 		{
 			const QString &filePath = infoList.at(i).absoluteFilePath();
-			if (!filePath.contains(defaultName))
+			if (filePath.contains(defaultName))
 			{
-				goto NoExistName;
+				exitsDefaultName = true;
+				break;
 			}
 
 		}
-		defaultName = QString("default_%1.desk").arg(num++);
+		if (exitsDefaultName)
+			defaultName = QString("default_%1.desk").arg(num++);
+		else
+			break;
 	}
-	while(1)
-
-NoExistName:
+	
 
 	return defaultName;
 
+}
+
+void CreateNewDesktopWindow()
+{
+	Controller *controller = new Controller;
+	DesktopWindow *window = new DesktopWindow;
+	controller->Load("", window);
+	window->SetController(controller);
+	window->resize(400, 650);
+	window->move(QPoint(350, 100));
+	window->show();
+}
+
+void CreateNewDesktopWindow( const QString &path )
+{
+	const QString &filePath = path;
+	Controller *controller = new Controller;
+	DesktopWindow *window = new DesktopWindow;
+	controller->Load(filePath, window);
+	window->SetController(controller);
+	window->Show();
 }

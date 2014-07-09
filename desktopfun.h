@@ -16,6 +16,7 @@ QDataStream &operator>>(QDataStream &in, DesktopWindowData &data);
 
 
 class Controller;
+class HandleWidget;
 class DesktopWindow : public QDialog
 {
 	Q_OBJECT
@@ -76,6 +77,8 @@ private:
 	QAction	*m_actAddFile;
 	QAction	*m_actAddDir;
 	QAction	*m_actAnchor;
+	QAction	*m_actAddNewWindow;
+	QAction	*m_actSetting;
 
 private:
 	// settings
@@ -96,13 +99,32 @@ private:
 	QTimer	*m_saveDeskTimer;
 	int		m_saveIntevalTime;
 	bool	m_windowHadHide;
+
+	int		m_outside;
 private:
 	// animation
 	QPropertyAnimation	*m_animateWindow;
 };
 
 
+class HandleWidget : public QWidget
+{
+	Q_OBJECT
+public:
+	HandleWidget(QWidget *parent = NULL);
 
+	void Move(QPoint point);
+	void Hide();
+
+signals:
+	void clicked();
+
+protected:
+	void paintEvent(QPaintEvent *event);
+	void mousePressEvent(QMouseEvent *event);
+
+	QColor m_bgColor;
+};
 
 
 #endif // DESKTOPFUN_H

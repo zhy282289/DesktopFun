@@ -15,4 +15,6 @@ QString GetDefaultSaveDeskName();
 
 HWND FindDesktopWnd();
 
+void CreateNewDesktopWindow();
+void CreateNewDesktopWindow(const QString &path);
 #endif // DATA_H

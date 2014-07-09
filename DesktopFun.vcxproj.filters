@@ -74,15 +74,6 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="application.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_application.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_application.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="desktopfun.h">
@@ -101,9 +92,6 @@
       <Filter>Header Files</Filter>
     </CustomBuild>
     <CustomBuild Include="data.h">
-      <Filter>Header Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="application.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
   </ItemGroup>

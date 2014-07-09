@@ -2,13 +2,13 @@
 #include "desktopfun.h"
 #include "controller.h"
 #include "data.h"
-#include "application.h"
+
 
 void RegisterMetaTypeStream();
 void LoadWindow();
 int main(int argc, char *argv[])
 {
-	Application a(argc, argv);
+	QApplication a(argc, argv);
 	
 	QTextCodec::setCodecForCStrings(QTextCodec::codecForName("gb18030"));
 

@@ -41,7 +41,6 @@ private slots:
 	void SlotItemMenu(int menuID);
 	void SlotItemHadMove();
 	void SlotSaveDesk();
-	void SlotAnimationFinish();
 
 private:
 	void HitSide( QMouseEvent *event);
@@ -60,11 +59,9 @@ protected:
 	void mouseMoveEvent(QMouseEvent *event);
 	void showEvent(QShowEvent *event);
 	void contextMenuEvent(QContextMenuEvent *event);
-	void focusOutEvent(QFocusEvent *event);
-	void focusInEvent(QFocusEvent *event);
+
 	void leaveEvent(QEvent *event);
 	void enterEvent(QEvent *event);
-	void keyPressEvent(QKeyEvent *event);
 
 private:
 	bool	m_bLeftBtnDown;
@@ -76,7 +73,6 @@ private:
 	QAction	*m_actAddFile;
 	QAction	*m_actAddDir;
 	QAction	*m_actAnchor;
-
 private:
 	// settings
 	bool	m_bMoveWindow;
@@ -95,7 +91,7 @@ private:
 
 	QTimer	*m_saveDeskTimer;
 	int		m_saveIntevalTime;
-	bool	m_windowHadHide;
+
 private:
 	// animation
 	QPropertyAnimation	*m_animateWindow;

@@ -13,7 +13,11 @@ struct ItemData
 	QString path;
 	QRect rect;
 	QPixmap pix;
-
+	bool bItemCanMove;
+	ItemData()
+	{
+		bItemCanMove = true;
+	}
 };
 Q_DECLARE_METATYPE(ItemData)
 typedef QList<ItemData> ItemDatas;
@@ -65,7 +69,7 @@ private:
 	QPoint  m_oldPoint;
 
 	bool	m_bMouseEnter;
-	bool	m_bItemCanMove;
+	//bool	m_bItemCanMove;
 	QAction *m_actRemove;
 
 };
@@ -77,6 +81,7 @@ class ItemText : public QLabel
 public:
 	ItemText(QWidget *parent);
 
+	void SetText(const QString &text);
 private:
 
 };

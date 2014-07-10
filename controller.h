@@ -16,15 +16,14 @@ public:
 
 	QList<Item*> *Load(const QString &filePath, QWidget *parent);
 	QList<Item*> *GetItems();
-
+	
 	DesktopWindowData GetDesktopWindowData();
 	void SetDesktopWindowData(const DesktopWindowData &data);
-
 	void Save();
 	void Add(const ItemData &data, QWidget *parent);
 	void Remove(Item *item);
-
 	void SetItemCanMove(bool move);
+	QString GetSavePath();
 
 private:
 	QList<Item*>	m_items;

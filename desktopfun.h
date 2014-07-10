@@ -8,8 +8,18 @@
 
 struct DesktopWindowData
 {
-	QRect rect;
+	QRect   rect;
+	bool	bWindowCanMove;
+	bool	bItemCanMove;
+	bool	windowHadHide;
+	DesktopWindowData()
+	{
+		bWindowCanMove = true;
+		bItemCanMove = true;
+		windowHadHide = false;
+	}
 };
+
 Q_DECLARE_METATYPE(DesktopWindowData)
 QDataStream &operator<<(QDataStream &out, const DesktopWindowData &data);
 QDataStream &operator>>(QDataStream &in, DesktopWindowData &data);
@@ -67,6 +77,10 @@ protected:
 	void enterEvent(QEvent *event);
 	void keyPressEvent(QKeyEvent *event);
 
+	void dragEnterEvent(QDragEnterEvent *event);
+	void dragMoveEvent(QDragMoveEvent *event);
+	void dropEvent(QDropEvent *event);
+
 private:
 	bool	m_bLeftBtnDown;
 	QPoint  m_oldPoint;
@@ -78,6 +92,7 @@ private:
 	QAction	*m_actAddDir;
 	QAction	*m_actAnchor;
 	QAction	*m_actAddNewWindow;
+	QAction	*m_actRemoveNewWindow;
 	QAction	*m_actSetting;
 
 private:
@@ -90,15 +105,17 @@ private:
 	int		top;
 	int		bottom;
 
-	bool	m_bWindowCanMove;
-	bool	m_bItemCanMove;
+	DesktopWindowData	m_windowData;
+	//bool	m_bWindowCanMove;
+	//bool	m_bItemCanMove;
+
 	QSize	m_iconSize;
 
 	QColor	m_bgColor;
 
 	QTimer	*m_saveDeskTimer;
 	int		m_saveIntevalTime;
-	bool	m_windowHadHide;
+	//bool	m_windowHadHide;
 
 	int		m_outside;
 private:

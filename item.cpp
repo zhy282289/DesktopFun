@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "item.h"
+#include "data.h"
+
 
 Item::Item(QWidget *parent)
 	: QWidget(parent)
@@ -7,12 +9,12 @@ Item::Item(QWidget *parent)
 	m_bLeftBtnDown = false;
 	m_bWindowHadMove = false;
 	m_bMouseEnter = false;
-	m_bItemCanMove = true;
+	//m_bItemCanMove = true;
 
 	m_itemPixmap = new ItemPixmap(this);
 	m_itemText = new ItemText(this);
 	
-	m_actRemove = new QAction("ÒÆ³ý", this);
+	m_actRemove = new QAction("Remove", this);
 	connect(m_actRemove, SIGNAL(triggered()), this, SLOT(SlotActTriggered()));
 
 
@@ -57,11 +59,11 @@ void Item::mouseReleaseEvent( QMouseEvent *event )
 
 	if (!m_bWindowHadMove)
 	{
-		if (event->button() == Qt::LeftButton)
+		if (event->button() == Qt::LeftButton && geometry().contains(mapToParent(event->pos())))
 		{
 			emit SigLeftMouseClicked(m_data.path);
 		}
-		else
+		else if(event->button() == Qt::RightButton)
 		{
 			emit SigRightMouseClicked();
 		}
@@ -77,7 +79,7 @@ void Item::mouseReleaseEvent( QMouseEvent *event )
 
 void Item::mouseMoveEvent( QMouseEvent *event )
 {
-	if (m_bLeftBtnDown && m_bItemCanMove)
+	if (m_bLeftBtnDown && m_data.bItemCanMove)
 	{
 		QPoint newPoint = /*mapToParent*/(m_oldPoint);
 		move(mapToParent(event->pos()) - newPoint);
@@ -90,7 +92,7 @@ void Item::mouseMoveEvent( QMouseEvent *event )
 void Item::SetData( const ItemData &data )
 {
 	m_data = data;
-	m_itemText->setText(QFileInfo(m_data.path).baseName());
+	m_itemText->SetText(QFileInfo(m_data.path).baseName());
 	m_itemPixmap->SetPixmap(m_data.pix);
 }
 
@@ -136,20 +138,37 @@ ItemData Item::GetData()
 
 void Item::SetCanMove( bool canMove )
 {
-	m_bItemCanMove = canMove;
+	m_data.bItemCanMove = canMove;
 }
 
 bool Item::GetCanMove()
 {
-	return m_bItemCanMove;
+	return m_data.bItemCanMove;
 }
 
 ItemText::ItemText( QWidget *parent )
 	:QLabel(parent)
 {
 	setFixedHeight(22);
-	setAlignment(Qt::AlignCenter);
-	setStyleSheet("ItemText{background: red;}");
+	//setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+	setStyleSheet("ItemText{font-size: 14px;font-style:bold;color:rgb(200,200,200)}");
+}
+
+void ItemText::SetText( const QString &text )
+{
+	QFontMetrics metrics(font());
+	int len = metrics.width(text);
+	if ( metrics.width(text) > g_iconSize)
+	{
+		setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+	}
+	else
+	{
+		setAlignment(Qt::AlignCenter);
+	}
+
+	setText(text);
+	setToolTip(text);
 }
 
 ItemPixmap::ItemPixmap( QWidget *parent )
@@ -189,10 +208,10 @@ void ItemPixmap::paintEvent( QPaintEvent *event )
 
 QDataStream &operator<<(QDataStream &out, const ItemData &data)
 {
-	return out << data.path << data.pix << data.rect;
+	return out << data.path << data.pix << data.rect << data.bItemCanMove;
 }
 
 QDataStream &operator>>(QDataStream &in, ItemData &data)
 {
-	return in >> data.path >> data.pix >> data.rect;
+	return in >> data.path >> data.pix >> data.rect >> data.bItemCanMove;
 }

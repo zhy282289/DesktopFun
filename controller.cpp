@@ -116,6 +116,13 @@ void Controller::SetItemCanMove( bool move )
 }
 
 
+
+QString Controller::GetSavePath()
+{
+	return m_savePath;
+}
+
+
 Controller *g_controller = NULL;
 Controller* GetController( QObject *parent /*= NULL*/ )
 {

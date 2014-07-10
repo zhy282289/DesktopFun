@@ -17,4 +17,13 @@ HWND FindDesktopWnd();
 
 void CreateNewDesktopWindow();
 void CreateNewDesktopWindow(const QString &path);
+
+
+
+static const int g_iconSize = 80;
+
+
+
+
+
 #endif // DATA_H

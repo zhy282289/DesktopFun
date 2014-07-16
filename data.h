@@ -22,7 +22,7 @@ void CreateNewDesktopWindow(const QString &path);
 
 static const int g_iconSize = 80;
 
-
+void OpenExplorerAndSelectFile(const QString &filePath);
 
 
 

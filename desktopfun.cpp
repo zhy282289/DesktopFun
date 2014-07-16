@@ -35,26 +35,28 @@ DesktopWindow::DesktopWindow( QWidget *parent)
 	m_outside = 1;
 
 	m_iconSize = QSize(g_iconSize, g_iconSize);
-	m_bgColor = QColor(0, 0, 250, 80);
+
 
 	m_saveIntevalTime = 5 * 1000;
 	m_saveDeskTimer = new QTimer(this);
 	m_saveDeskTimer->start(m_saveIntevalTime);
 	connect(m_saveDeskTimer, SIGNAL(timeout()), this, SLOT(SlotSaveDesk()));
 
-	m_actAddFile = new QAction("Add File", this);
-	m_actAddDir = new QAction("Add Directory", this);
-	m_actAnchor = new QAction("Anchor", this);
-	m_actAnchor->setCheckable(true);
-	
+	m_actAddFile = new QAction("增加文件", this);
+	m_actAddDir = new QAction("增加文件夹", this);
+	m_actAnchorWindow = new QAction("窗口停泊", this);
+	m_actAnchorWindow->setCheckable(true);
+	m_actAnchorItem = new QAction("图标停泊", this);
+	m_actAnchorItem->setCheckable(true);
 
-	m_actAddNewWindow = new QAction("New Window", this);
-	m_actRemoveNewWindow = new QAction("Remove Window", this);
-	m_actSetting = new QAction("Settings", this);
+	m_actAddNewWindow = new QAction("新窗口", this);
+	m_actRemoveNewWindow = new QAction("删除窗口", this);
+	m_actSetting = new QAction("设置", this);
 
 	connect(m_actAddFile, SIGNAL(triggered()), this, SLOT(SlotActTriggered()));
 	connect(m_actAddDir, SIGNAL(triggered()), this, SLOT(SlotActTriggered()));
-	connect(m_actAnchor, SIGNAL(triggered()), this, SLOT(SlotActTriggered()));
+	connect(m_actAnchorWindow, SIGNAL(triggered()), this, SLOT(SlotActTriggered()));
+	connect(m_actAnchorItem, SIGNAL(triggered()), this, SLOT(SlotActTriggered()));
 	connect(m_actAddNewWindow, SIGNAL(triggered()), this, SLOT(SlotActTriggered()));
 	connect(m_actSetting, SIGNAL(triggered()), this, SLOT(SlotActTriggered()));
 	connect(m_actRemoveNewWindow, SIGNAL(triggered()), this, SLOT(SlotActTriggered()));
@@ -74,30 +76,26 @@ void DesktopWindow::SetController( Controller *controller )
 	m_windowData = m_controller->GetDesktopWindowData();
 
 	// init ui
-	m_actAnchor->setChecked(!m_windowData.bWindowCanMove);
+	m_actAnchorWindow->setChecked(!m_windowData.bWindowCanMove);
+	m_actAnchorItem->setChecked(!m_windowData.bItemCanMove);
 }
 
 void DesktopWindow::paintEvent( QPaintEvent *event )
 {
 	if (!m_windowData.windowHadHide)
 	{
-		QPixmap desktopPixmap = QueryDesktopPixmap();
+		QPixmap desktopPixmap = !m_windowData.bgPixmap.bgPixmap.isNull() ?  m_windowData.bgPixmap.bgPixmap: QueryDesktopPixmap();
 		QRect srctRect = geometry();
 		QRect destRect = rect();
 		QPainter painter(this);
 		painter.drawPixmap(destRect, desktopPixmap, srctRect);
-		painter.fillRect(rect(), QBrush(m_bgColor));
+		painter.fillRect(rect(), QBrush(m_windowData.color));
 	}
 	else
 	{
-		//QPixmap desktopPixmap = QueryDesktopPixmap();
-		//QRect srctRect = geometry();
-		//QRect destRect = rect();
-		//srctRect.moveTopLeft(QPoint(srctRect.topLeft().x(), 0));
 		QPainter painter(this);
-		//painter.drawPixmap(destRect, desktopPixmap, srctRect);
-		QColor color = m_bgColor;
-		color.setAlpha(250);
+		QColor color = m_windowData.color;
+		//color.setAlpha(250);
 		painter.fillRect(rect(), QBrush(color));
 	}
 
@@ -227,7 +225,7 @@ void DesktopWindow::SlotActTriggered()
 	QAction *obj = qobject_cast<QAction*>(sender());
 	if (obj == m_actAddFile)
 	{
-		QStringList paths = QFileDialog::getOpenFileNames(this, "Add File");
+		QStringList paths = QFileDialog::getOpenFileNames(this, "增加文件");
 		for (int i = 0; i < paths.size(); ++i)
 		{
 			QPoint pos = obj->data().toPoint();
@@ -242,7 +240,7 @@ void DesktopWindow::SlotActTriggered()
 	}
 	else if (m_actAddDir == obj)
 	{
-		QString path = QFileDialog::getExistingDirectory(this, "Add Directory");
+		QString path = QFileDialog::getExistingDirectory(this, "增加文件夹");
 		if (!path.isEmpty())
 		{
 			QPoint pos = obj->data().toPoint();
@@ -254,10 +252,13 @@ void DesktopWindow::SlotActTriggered()
 			m_controller->Add(data, this);
 		}
 	}
-	else if (m_actAnchor == obj)
+	else if (m_actAnchorWindow == obj)
 	{
-		m_windowData.bWindowCanMove = !m_actAnchor->isChecked();
-		m_windowData.bItemCanMove = !m_actAnchor->isChecked();
+		m_windowData.bWindowCanMove = !m_actAnchorWindow->isChecked();
+	}
+	else if (m_actAnchorItem == obj)
+	{
+		m_windowData.bItemCanMove = !m_actAnchorItem->isChecked();
 		m_controller->SetItemCanMove(m_windowData.bItemCanMove);
 	}
 	else if (m_actAddNewWindow == obj)
@@ -266,24 +267,19 @@ void DesktopWindow::SlotActTriggered()
 	}
 	else if (m_actRemoveNewWindow == obj)
 	{
-		int i = 0;
-		for (;i < 3; ++i)
-		{
-			if (!(QMessageBox::Yes == QMessageBox::warning(this, "warning", "will you want to remove this window?", QMessageBox::Yes | QMessageBox::No)))
-			{
-				break;
-			}
-		}
-		if (i == 3)
-		{
-			hide();
-			QFile::remove(m_controller->GetSavePath());
-		}
+		RemoveThisWindow();
 
 	}
 	else if (m_actSetting == obj)
 	{
+		SettingsDlg *settingDlg = new SettingsDlg(this);
+		connect(settingDlg, SIGNAL(SigSettingChanged(SettingData)), this, SLOT(SlotSettingChanged(SettingData)), Qt::UniqueConnection);
 
+		SettingData data;
+		data.color = m_windowData.color;
+		data.bgPix.bgPixmap = m_windowData.bgPixmap.bgPixmap;
+		data.bgPix.path = m_windowData.bgPixmap.path;
+		settingDlg->Show(data);
 	}
 }
 
@@ -296,7 +292,8 @@ void DesktopWindow::contextMenuEvent( QContextMenuEvent *event )
 	QMenu menu;
 	menu.addAction(m_actAddFile);
 	menu.addAction(m_actAddDir);
-	menu.addAction(m_actAnchor);
+	menu.addAction(m_actAnchorWindow);
+	menu.addAction(m_actAnchorItem);
 	menu.addAction(m_actAddNewWindow);
 	menu.addAction(m_actRemoveNewWindow);
 	menu.addSeparator();
@@ -331,13 +328,13 @@ QSize DesktopWindow::GetIconSize()
 
 void DesktopWindow::SetBgColor( QColor color )
 {
-	m_bgColor = color;
+	m_windowData.color = color;
 	update();
 }
 
 QColor DesktopWindow::GetBgColor()
 {
-	return m_bgColor;
+	return m_windowData.color;
 }
 
 void DesktopWindow::SlotSaveDesk()
@@ -423,12 +420,12 @@ void DesktopWindow::HideOrShowWindow( bool hide )
 			m_animateWindow->setEndValue(QPoint(screenGeometry.width() - m_outside, pos.y()));
 			m_animateWindow->start();
 		}
-		//else if (bottom)
-		//{
-		//	m_animateWindow->setStartValue(pos);
-		//	m_animateWindow->setEndValue(QPoint(pos.x(), screenGeometry.height()-5));
-		//	m_animateWindow->start();
-		//}
+		else if (bottom)
+		{
+			m_animateWindow->setStartValue(pos);
+			m_animateWindow->setEndValue(QPoint(pos.x(), screenGeometry.height()-5));
+			m_animateWindow->start();
+		}
 	}
 	else 
 	{
@@ -452,12 +449,12 @@ void DesktopWindow::HideOrShowWindow( bool hide )
 			m_animateWindow->setEndValue(QPoint(qMax(0, screenGeometry.width() - geometry().width() + m_outside), pos.y()));
 			m_animateWindow->start();
 		}
-		//else if (bottom)
-		//{
-		//	m_animateWindow->setStartValue(pos);
-		//	m_animateWindow->setEndValue(QPoint(pos.x(), qMax(0, screenGeometry.height() - geometry().height()) + m_outside));
-		//	m_animateWindow->start();
-		//}
+		else if (bottom)
+		{
+			m_animateWindow->setStartValue(pos);
+			m_animateWindow->setEndValue(QPoint(pos.x(), qMax(0, screenGeometry.height() - geometry().height()) + m_outside));
+			m_animateWindow->start();
+		}
 	}
 
 	setFocus();
@@ -507,6 +504,20 @@ void DesktopWindow::keyPressEvent( QKeyEvent *event )
 	case Qt::Key_S:
 		{
 			HideOrShowWindow(false);
+		}
+	case Qt::Key_Delete:
+		{
+			RemoveThisWindow();
+		}
+		break;
+	case Qt::Key_O:
+		{
+			if (event->modifiers() & Qt::AltModifier)
+			{
+				AboutDlg *aboutDlg = new AboutDlg(NULL);
+				aboutDlg->resize(560, 300);
+				aboutDlg->show();
+			}
 		}
 		break;
 	}
@@ -568,6 +579,37 @@ void DesktopWindow::dropEvent( QDropEvent *event )
 	}
 }
 
+void DesktopWindow::SlotSettingChanged( SettingData data )
+{
+	m_windowData.color = data.color;
+	m_windowData.bgPixmap.bgPixmap = data.bgPix.bgPixmap;
+	m_windowData.bgPixmap.path = data.bgPix.path;
+	m_controller->SetItemBGColor(data.color);
+	update();
+}
+
+void DesktopWindow::RemoveThisWindow()
+{
+	int i = 0;
+	for (;i < 2; ++i)
+	{
+		if (!(QMessageBox::Yes == QMessageBox::warning(this, "提示", "删除本窗口?", QMessageBox::Yes | QMessageBox::No)))
+		{
+			break;
+		}
+	}
+	if (i == 2)
+	{
+		hide();
+		QFile::remove(m_controller->GetSavePath());
+	}
+}
+
+void DesktopWindow::mouseDoubleClickEvent( QMouseEvent *event )
+{
+	HideOrShowWindow(true);
+}
+
 
 
 
@@ -579,11 +621,11 @@ void DesktopWindow::dropEvent( QDropEvent *event )
 
 QDataStream &operator<<(QDataStream &out, const DesktopWindowData &data)
 {
-	return out << data.rect << data.bWindowCanMove << data.bItemCanMove << data.windowHadHide;
+	return out << data.rect << data.bWindowCanMove << data.bItemCanMove << data.windowHadHide << data.color << data.bgPixmap.path;
 }
 QDataStream &operator>>(QDataStream &in, DesktopWindowData &data)
 {
-	return in >> data.rect >> data.bWindowCanMove >> data.bItemCanMove >> data.windowHadHide;
+	return in >> data.rect >> data.bWindowCanMove >> data.bItemCanMove >> data.windowHadHide >> data.color >> data.bgPixmap.path;
 }
 
 HandleWidget::HandleWidget( QWidget *parent /*= NULL*/ )

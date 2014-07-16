@@ -24,10 +24,14 @@ QList<Item*> *Controller::Load( const QString &filePath, QWidget *parent)
 		QList<ItemData> itemDatas;
 		QDataStream stream(&file);
 		stream >> m_desktopWindowData;
+		QPixmap pixmap;
+		pixmap.load(m_desktopWindowData.bgPixmap.path);
+		m_desktopWindowData.bgPixmap.bgPixmap = pixmap;
 		stream >> itemDatas;
 		for (int i = 0; i < itemDatas.size(); ++i)
 		{
 			Add(itemDatas.at(i), parent);
+			
 		}
 	}
 
@@ -60,6 +64,7 @@ void Controller::Add(const ItemData &data, QWidget *parent)
 {
 	Item *w = new Item(parent);
 	w->SetData(data);
+	w->SetBGColor(m_desktopWindowData.color);
 	m_items.push_back(w);
 	w->UpdatePostion();
 
@@ -120,6 +125,33 @@ void Controller::SetItemCanMove( bool move )
 QString Controller::GetSavePath()
 {
 	return m_savePath;
+}
+
+void Controller::SetItemBGColor( QColor color )
+{
+	int alpha = color.alpha()+50;
+	if (alpha >= 255)
+	{
+		color.setRed(qAbs(255 - color.red()));
+		color.setGreen(qAbs(255 - color.green()));
+		color.setBlue(qAbs(255 - color.blue()));
+		alpha = 200;
+	}
+
+	color.setAlpha(alpha);
+	for (int i = 0; i < m_items.size(); ++i)
+	{
+		m_items.at(i)->SetBGColor(color);
+	}
+}
+
+void Controller::RemoveAll()
+{
+	for (int i = 0; i < m_items.size(); ++i)
+	{
+		Remove(m_items.at(i));
+	}
+
 }
 
 

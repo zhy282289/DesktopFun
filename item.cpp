@@ -9,13 +9,16 @@ Item::Item(QWidget *parent)
 	m_bLeftBtnDown = false;
 	m_bWindowHadMove = false;
 	m_bMouseEnter = false;
+	m_bgColor = QColor(0, 250, 0, 100);
 	//m_bItemCanMove = true;
 
 	m_itemPixmap = new ItemPixmap(this);
 	m_itemText = new ItemText(this);
 	
-	m_actRemove = new QAction("Remove", this);
+	m_actRemove = new QAction("移除", this);
+	m_actLocateDirectory = new QAction("定位到文件夹", this);
 	connect(m_actRemove, SIGNAL(triggered()), this, SLOT(SlotActTriggered()));
+	connect(m_actLocateDirectory, SIGNAL(triggered()), this, SLOT(SlotActTriggered()));
 
 
 
@@ -37,8 +40,7 @@ void Item::paintEvent( QPaintEvent *event )
 	if (m_bMouseEnter)
 	{
 		QPainter painter(this);
-	//	painter.drawPixmap(rect(), m_data.pix);
-		painter.fillRect(rect(), QBrush(QColor(0, 250, 0, 100)));
+		painter.fillRect(rect(), QBrush(m_bgColor));
 	}
 
 }
@@ -49,7 +51,11 @@ void Item::mousePressEvent( QMouseEvent *event )
 	if (event->button() == Qt::LeftButton)
 	{
 		m_bLeftBtnDown = true;
-		m_oldPoint = event->pos();
+		if (m_data.bItemCanMove)
+		{
+			m_oldPoint = event->pos();
+		}
+		
 	}
 }
 
@@ -75,6 +81,7 @@ void Item::mouseReleaseEvent( QMouseEvent *event )
 	}
 
 	m_bWindowHadMove = false;
+
 }
 
 void Item::mouseMoveEvent( QMouseEvent *event )
@@ -106,6 +113,7 @@ void Item::enterEvent( QEvent *event )
 {
 	m_bMouseEnter = true;
 	update();
+	QApplication::setActiveWindow(parentWidget());
 }
 
 void Item::leaveEvent( QEvent *event )
@@ -121,13 +129,17 @@ void Item::SlotActTriggered()
 	{
 		emit SigItemMenu(0);
 	}
+	else if (m_actLocateDirectory == obj)
+	{
+		OpenExplorerAndSelectFile(m_data.path);
+	}
 }
 
 void Item::contextMenuEvent( QContextMenuEvent *event )
 {
 	QMenu menu(this);
 	menu.addAction(m_actRemove);
-
+	menu.addAction(m_actLocateDirectory);
 	menu.exec(event->globalPos());
 }
 
@@ -146,6 +158,12 @@ bool Item::GetCanMove()
 	return m_data.bItemCanMove;
 }
 
+void Item::SetBGColor( QColor color )
+{
+	m_bgColor = color;
+	update();
+}
+
 ItemText::ItemText( QWidget *parent )
 	:QLabel(parent)
 {
@@ -156,18 +174,20 @@ ItemText::ItemText( QWidget *parent )
 
 void ItemText::SetText( const QString &text )
 {
+	QString showText = text;
 	QFontMetrics metrics(font());
-	int len = metrics.width(text);
-	if ( metrics.width(text) > g_iconSize)
+	int w = metrics.width(showText);
+	if ( w > 60)
 	{
 		setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+		showText = (showText.left(showText.size()-3) + QString(".."));
 	}
 	else
 	{
 		setAlignment(Qt::AlignCenter);
 	}
 
-	setText(text);
+	setText(showText);
 	setToolTip(text);
 }
 
@@ -215,3 +235,33 @@ QDataStream &operator>>(QDataStream &in, ItemData &data)
 {
 	return in >> data.path >> data.pix >> data.rect >> data.bItemCanMove;
 }
+
+//////////////////////////////////////////////////////////////////////////
+AboutDlg::AboutDlg( QWidget *parent /*= NULL*/ )
+	:QLabel(parent)
+{
+	setWindowFlags(Qt::FramelessWindowHint);
+	setAttribute(Qt::WA_DeleteOnClose);
+	setAttribute(Qt::WA_TranslucentBackground);
+
+}
+
+
+void AboutDlg::mousePressEvent( QMouseEvent *event )
+{
+	close();
+}
+
+void AboutDlg::paintEvent( QPaintEvent *event )
+{
+	QPainter painter(this);
+	const QString text("关于此App:\n"
+		"最终所有权归: BOY 所有\n"
+		"QQ:3969622**\n"
+		"IP:159995108**\n"
+		"原谅我这一生不羁放纵爱自由");
+	painter.fillRect(rect(), QBrush(QColor(0,250,250)));
+	painter.setPen(QPen(QColor(250,0,0,150)));
+	painter.drawText(rect(), Qt::AlignCenter, text);
+}
+

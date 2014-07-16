@@ -4,6 +4,10 @@
 #include "data.h"
 #include "application.h"
 
+#include "settingsdlg.h"
+
+Q_IMPORT_PLUGIN(qcncodecs)
+
 void RegisterMetaTypeStream();
 void LoadWindow();
 int main(int argc, char *argv[])
@@ -11,7 +15,6 @@ int main(int argc, char *argv[])
 	Application a(argc, argv);
 	
 	QTextCodec::setCodecForCStrings(QTextCodec::codecForName("gb18030"));
-
 
 	LoadWindow();
 

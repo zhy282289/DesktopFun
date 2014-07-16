@@ -83,13 +83,19 @@
     <ClCompile Include="GeneratedFiles\Release\moc_application.cpp">
       <Filter>Generated Files\Release</Filter>
     </ClCompile>
+    <ClCompile Include="settingsdlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_settingsdlg.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_settingsdlg.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="desktopfun.h">
       <Filter>Header Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="desktopfun.ui">
-      <Filter>Form Files</Filter>
     </CustomBuild>
     <CustomBuild Include="desktopfun.qrc">
       <Filter>Resource Files</Filter>
@@ -106,11 +112,11 @@
     <CustomBuild Include="application.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
+    <CustomBuild Include="settingsdlg.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="GeneratedFiles\ui_desktopfun.h">
-      <Filter>Generated Files</Filter>
-    </ClInclude>
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>

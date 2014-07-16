@@ -40,6 +40,9 @@ public:
 
 	void SetCanMove(bool canMove);
 	bool GetCanMove();
+
+	void SetBGColor(QColor color);
+
 signals:
 	void SigLeftMouseClicked(QString);
 	void SigRightMouseClicked();
@@ -69,9 +72,10 @@ private:
 	QPoint  m_oldPoint;
 
 	bool	m_bMouseEnter;
-	//bool	m_bItemCanMove;
 	QAction *m_actRemove;
+	QAction *m_actLocateDirectory;
 
+	QColor  m_bgColor;
 };
 
 
@@ -100,4 +104,20 @@ protected:
 private:
 	QPixmap	m_pixmap;
 };
+
+
+class AboutDlg : public QLabel
+{
+	Q_OBJECT
+public:
+	AboutDlg(QWidget *parent = NULL);
+
+protected:
+	void mousePressEvent(QMouseEvent *event);
+	void paintEvent(QPaintEvent *event);
+};
+
+
+
+
 #endif // ITEM_H

@@ -133,3 +133,17 @@ void CreateNewDesktopWindow( const QString &path )
 	window->SetController(controller);
 	window->Show();
 }
+
+void OpenExplorerAndSelectFile( const QString &filePath )
+{
+	QString path = QDir::toNativeSeparators(filePath);
+	QProcess precoss;
+#ifdef Q_OS_WIN32
+	QProcess::execute("explorer", QStringList() << "/e,/select," << path);
+#else
+	//QProcess::execute("open", QStringList() << "/e,/select,"<< filePath);
+	string strPath = filePath.toLocal8Bit().data();
+	NSString *fullPath = [NSString stringWithUTF8String:strPath.c_str()];
+	return [[NSWorkspace sharedWorkspace] selectFile:fullPath inFileViewerRootedAtPath:nil];
+#endif
+}

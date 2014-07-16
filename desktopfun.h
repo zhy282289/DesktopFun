@@ -5,6 +5,9 @@
 #include <QDialog>
 #include <QSize>
 #include "item.h"
+#include "settingsDlg.h"
+
+
 
 struct DesktopWindowData
 {
@@ -12,11 +15,15 @@ struct DesktopWindowData
 	bool	bWindowCanMove;
 	bool	bItemCanMove;
 	bool	windowHadHide;
+	QColor	color;
+	BGPixmap bgPixmap;
+
 	DesktopWindowData()
 	{
 		bWindowCanMove = true;
 		bItemCanMove = true;
 		windowHadHide = false;
+		color = QColor(150, 150, 0, 150);
 	}
 };
 
@@ -53,6 +60,7 @@ private slots:
 	void SlotItemHadMove();
 	void SlotSaveDesk();
 	void SlotAnimationFinish();
+	void SlotSettingChanged(SettingData data);
 
 private:
 	void HitSide( QMouseEvent *event);
@@ -63,12 +71,14 @@ private:
 	bool AnimationIsRun();
 	bool MouseInBorder(QPoint point);
 	void HideOrShowWindow(bool hide);
+	void RemoveThisWindow();
 
 protected:
 	void paintEvent(QPaintEvent *event);
 	void mousePressEvent(QMouseEvent *event);
 	void mouseReleaseEvent(QMouseEvent *event);
 	void mouseMoveEvent(QMouseEvent *event);
+	void mouseDoubleClickEvent(QMouseEvent *event);
 	void showEvent(QShowEvent *event);
 	void contextMenuEvent(QContextMenuEvent *event);
 	void focusOutEvent(QFocusEvent *event);
@@ -90,7 +100,8 @@ private:
 	
 	QAction	*m_actAddFile;
 	QAction	*m_actAddDir;
-	QAction	*m_actAnchor;
+	QAction	*m_actAnchorWindow;
+	QAction	*m_actAnchorItem;
 	QAction	*m_actAddNewWindow;
 	QAction	*m_actRemoveNewWindow;
 	QAction	*m_actSetting;
@@ -106,17 +117,9 @@ private:
 	int		bottom;
 
 	DesktopWindowData	m_windowData;
-	//bool	m_bWindowCanMove;
-	//bool	m_bItemCanMove;
-
 	QSize	m_iconSize;
-
-	QColor	m_bgColor;
-
 	QTimer	*m_saveDeskTimer;
 	int		m_saveIntevalTime;
-	//bool	m_windowHadHide;
-
 	int		m_outside;
 private:
 	// animation

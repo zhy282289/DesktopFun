@@ -22,7 +22,9 @@ public:
 	void Save();
 	void Add(const ItemData &data, QWidget *parent);
 	void Remove(Item *item);
+	void RemoveAll();
 	void SetItemCanMove(bool move);
+	void SetItemBGColor(QColor color);
 	QString GetSavePath();
 
 private:

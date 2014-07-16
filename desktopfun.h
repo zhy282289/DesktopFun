@@ -23,7 +23,7 @@ struct DesktopWindowData
 		bWindowCanMove = true;
 		bItemCanMove = true;
 		windowHadHide = false;
-		color = QColor(150, 150, 0, 150);
+		color = QColor(250, 20, 80, 150);
 	}
 };
 

@@ -243,7 +243,7 @@ AboutDlg::AboutDlg( QWidget *parent /*= NULL*/ )
 	setWindowFlags(Qt::FramelessWindowHint);
 	setAttribute(Qt::WA_DeleteOnClose);
 	setAttribute(Qt::WA_TranslucentBackground);
-
+	resize(530, 800);
 }
 
 
@@ -260,7 +260,7 @@ void AboutDlg::paintEvent( QPaintEvent *event )
 		"QQ:3969622**\n"
 		"IP:159995108**\n"
 		"原谅我这一生不羁放纵爱自由");
-	painter.fillRect(rect(), QBrush(QColor(0,250,250)));
+	painter.fillRect(rect(), QBrush(QColor(255,210,255, 180)));
 	painter.setPen(QPen(QColor(250,0,0,150)));
 	painter.drawText(rect(), Qt::AlignCenter, text);
 }

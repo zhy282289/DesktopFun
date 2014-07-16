@@ -11,6 +11,7 @@ DesktopWindow::DesktopWindow( QWidget *parent)
 	setObjectName("DesktopWindow");
 	setWindowFlags(Qt::FramelessWindowHint);
 	setAttribute(Qt::WA_DeleteOnClose);
+	//setAttribute(Qt::WA_TranslucentBackground);
 	setAttribute(Qt::WA_OpaquePaintEvent);
 	setMinimumSize(100, 100);
 	setMouseTracking(true);
@@ -84,18 +85,21 @@ void DesktopWindow::paintEvent( QPaintEvent *event )
 {
 	if (!m_windowData.windowHadHide)
 	{
-		QPixmap desktopPixmap = !m_windowData.bgPixmap.bgPixmap.isNull() ?  m_windowData.bgPixmap.bgPixmap: QueryDesktopPixmap();
-		QRect srctRect = geometry();
-		QRect destRect = rect();
 		QPainter painter(this);
-		painter.drawPixmap(destRect, desktopPixmap, srctRect);
+
+		//QColor color = m_windowData.color;
+		//color.setAlpha(250);
+		//painter.fillRect(rect(), QBrush(Qt::NoBrush));
+
+		QPixmap desktopPixmap = !m_windowData.bgPixmap.bgPixmap.isNull() ?  m_windowData.bgPixmap.bgPixmap: QueryDesktopPixmap();
+		painter.drawPixmap(rect(), desktopPixmap, geometry());
+
 		painter.fillRect(rect(), QBrush(m_windowData.color));
 	}
 	else
 	{
 		QPainter painter(this);
 		QColor color = m_windowData.color;
-		//color.setAlpha(250);
 		painter.fillRect(rect(), QBrush(color));
 	}
 
@@ -225,7 +229,8 @@ void DesktopWindow::SlotActTriggered()
 	QAction *obj = qobject_cast<QAction*>(sender());
 	if (obj == m_actAddFile)
 	{
-		QStringList paths = QFileDialog::getOpenFileNames(this, "增加文件");
+		AddFilesOrDirectoryDlg dlg(this);
+		QStringList paths = dlg.AddFiles();
 		for (int i = 0; i < paths.size(); ++i)
 		{
 			QPoint pos = obj->data().toPoint();
@@ -240,7 +245,9 @@ void DesktopWindow::SlotActTriggered()
 	}
 	else if (m_actAddDir == obj)
 	{
-		QString path = QFileDialog::getExistingDirectory(this, "增加文件夹");
+		//QString path = QFileDialog::getExistingDirectory(this, "增加文件夹");
+		AddFilesOrDirectoryDlg dlg(this);
+		QString path = dlg.AddDirectory();
 		if (!path.isEmpty())
 		{
 			QPoint pos = obj->data().toPoint();
@@ -294,6 +301,7 @@ void DesktopWindow::contextMenuEvent( QContextMenuEvent *event )
 	menu.addAction(m_actAddDir);
 	menu.addAction(m_actAnchorWindow);
 	menu.addAction(m_actAnchorItem);
+	menu.addSeparator();
 	menu.addAction(m_actAddNewWindow);
 	menu.addAction(m_actRemoveNewWindow);
 	menu.addSeparator();
@@ -515,7 +523,7 @@ void DesktopWindow::keyPressEvent( QKeyEvent *event )
 			if (event->modifiers() & Qt::AltModifier)
 			{
 				AboutDlg *aboutDlg = new AboutDlg(NULL);
-				aboutDlg->resize(560, 300);
+				
 				aboutDlg->show();
 			}
 		}
@@ -593,7 +601,8 @@ void DesktopWindow::RemoveThisWindow()
 	int i = 0;
 	for (;i < 2; ++i)
 	{
-		if (!(QMessageBox::Yes == QMessageBox::warning(this, "提示", "删除本窗口?", QMessageBox::Yes | QMessageBox::No)))
+		MsgBox msgBox(this);
+		if (!msgBox.MsgQuestion("提示", "删除本窗口?"))
 		{
 			break;
 		}

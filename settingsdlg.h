@@ -109,7 +109,7 @@ class AddFilesOrDirectoryDlg : public QDialog
 public:
 	AddFilesOrDirectoryDlg(QWidget *parent = NULL);
 
-	QStringList AddFiles();
+	QStringList AddFiles(QStringList filters = QStringList());
 	QString AddDirectory();
 
 private slots:

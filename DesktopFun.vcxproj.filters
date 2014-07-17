@@ -92,6 +92,15 @@
     <ClCompile Include="GeneratedFiles\Release\moc_settingsdlg.cpp">
       <Filter>Generated Files\Release</Filter>
     </ClCompile>
+    <ClCompile Include="minimusicbox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_minimusicbox.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_minimusicbox.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="desktopfun.h">
@@ -113,6 +122,9 @@
       <Filter>Header Files</Filter>
     </CustomBuild>
     <CustomBuild Include="settingsdlg.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="minimusicbox.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
   </ItemGroup>

@@ -10,6 +10,7 @@ QPixmap QueryDesktopPixmap();
 QString GetAppPath();
 QString GetSettingPath();
 QString GetPageSettingPath();
+QString GetSongSettingPath();
 
 QString GetDefaultSaveDeskName();
 

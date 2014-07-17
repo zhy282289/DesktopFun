@@ -8,6 +8,8 @@
 
 #include <QLabel>
 
+
+
 struct ItemData
 {
 	QString path;
@@ -105,17 +107,6 @@ private:
 	QPixmap	m_pixmap;
 };
 
-
-class AboutDlg : public QLabel
-{
-	Q_OBJECT
-public:
-	AboutDlg(QWidget *parent = NULL);
-
-protected:
-	void mousePressEvent(QMouseEvent *event);
-	void paintEvent(QPaintEvent *event);
-};
 
 
 

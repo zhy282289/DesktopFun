@@ -42,6 +42,16 @@ QString GetPageSettingPath()
 	return QDir::toNativeSeparators(dirPath);
 }
 
+
+QString GetSongSettingPath()
+{
+	QString dirPath = GetSettingPath()+  "song"+ QDir::separator();
+	QDir dir;
+	dir.mkpath(dirPath);
+	return QDir::toNativeSeparators(dirPath);
+}
+
+
 static BOOL enumUserWindowsCB(HWND hwnd,LPARAM lParam)
 {
 	long wflags = GetWindowLong(hwnd, GWL_STYLE);

@@ -206,11 +206,12 @@ AddFilesOrDirectoryDlg::AddFilesOrDirectoryDlg( QWidget *parent /*= NULL*/ )
 	m_dlgTitle = new DialogTitle(this);
 }
 
-QStringList AddFilesOrDirectoryDlg::AddFiles()
+QStringList AddFilesOrDirectoryDlg::AddFiles(QStringList filters)
 {
 	m_dlgTitle->setText(" Ñ¡ÔñÎÄ¼þ");
 	m_fileDlg->setAcceptMode(QFileDialog::AcceptOpen);
 	m_fileDlg->setFileMode(QFileDialog::ExistingFiles);
+	m_fileDlg->setNameFilters(filters);
 	exec();
 	return m_fileDlg->result() ? m_fileDlg->selectedFiles() : QStringList();
 }

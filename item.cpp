@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "item.h"
 #include "data.h"
+#include "settingsdlg.h"
 
 
 Item::Item(QWidget *parent)
@@ -235,33 +236,3 @@ QDataStream &operator>>(QDataStream &in, ItemData &data)
 {
 	return in >> data.path >> data.pix >> data.rect >> data.bItemCanMove;
 }
-
-//////////////////////////////////////////////////////////////////////////
-AboutDlg::AboutDlg( QWidget *parent /*= NULL*/ )
-	:QLabel(parent)
-{
-	setWindowFlags(Qt::FramelessWindowHint);
-	setAttribute(Qt::WA_DeleteOnClose);
-	setAttribute(Qt::WA_TranslucentBackground);
-	resize(530, 800);
-}
-
-
-void AboutDlg::mousePressEvent( QMouseEvent *event )
-{
-	close();
-}
-
-void AboutDlg::paintEvent( QPaintEvent *event )
-{
-	QPainter painter(this);
-	const QString text("关于此App:\n"
-		"最终所有权归: BOY 所有\n"
-		"QQ:3969622**\n"
-		"IP:159995108**\n"
-		"原谅我这一生不羁放纵爱自由");
-	painter.fillRect(rect(), QBrush(QColor(255,210,255, 180)));
-	painter.setPen(QPen(QColor(250,0,0,150)));
-	painter.drawText(rect(), Qt::AlignCenter, text);
-}
-

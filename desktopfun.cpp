@@ -3,7 +3,7 @@
 #include "controller.h"
 #include "data.h"
 
-
+#include "minimusicbox.h"
 
 DesktopWindow::DesktopWindow( QWidget *parent)
 	: QDialog(parent)
@@ -522,9 +522,7 @@ void DesktopWindow::keyPressEvent( QKeyEvent *event )
 		{
 			if (event->modifiers() & Qt::AltModifier)
 			{
-				AboutDlg *aboutDlg = new AboutDlg(NULL);
-				
-				aboutDlg->show();
+				GetMiniMusicBox()->Show();
 			}
 		}
 		break;

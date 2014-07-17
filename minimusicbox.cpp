@@ -4,30 +4,47 @@
 #include "settingsdlg.h"
 #include <phonon/phonon>
 
+
+//////////////////////////////////////////////////////////////////////////
+void LoadSong(AudioList &audioList)
+{
+	QSettings settings(GetSongSettingPath()+"setting", QSettings::IniFormat);
+	QStringList songList= settings.value("songlist").toStringList();
+	audioList.FromStringList(songList);
+
+}
+void SavePaths(const AudioList &audioList)
+{
+	QStringList songList = audioList.ToStringList();
+	songList.removeAt(0);
+	QSettings settings(GetSongSettingPath()+"setting", QSettings::IniFormat);
+	settings.setValue("songlist", songList);
+}
+
 //////////////////////////////////////////////////////////////////////////
 MiniMusicBox::MiniMusicBox( QWidget *parent /*= NULL*/ )
 	:QLabel(parent)
 {
-	setWindowFlags(Qt::SubWindow | Qt::FramelessWindowHint);
-	setAttribute(Qt::WA_DeleteOnClose);
+	setWindowFlags( Qt::Dialog | Qt::FramelessWindowHint);
+	//setAttribute(Qt::WA_DeleteOnClose);
 	setAttribute(Qt::WA_TranslucentBackground);
 	setFixedSize(700, 300);
 	m_dlgTitle = new DialogTitle(this);
 	m_dlgTitle->setText(" 米你播放器");
 
+	m_audioList.AddFile(":/DesktopFun/小苹果(必有歌曲).mp3");
+	m_view = new AudioPlayListView(this);
+	connect(m_view, SIGNAL(SigPlay(QString)), this, SLOT(SlotPlay(QString)));
+	connect(m_view, SIGNAL(SigAddFiles()), this, SLOT(SlotAddFiles()));
+	connect(m_view, SIGNAL(SigRemoveFiles(QStringList)), this, SLOT(SlotRemoveFiles(QStringList)));
+	m_model = new AudioPlayListMode(&m_audioList, this);
+	m_view->setModel(m_model);
+	m_delegate = new AudioPlayListDelegate(this);
+	m_view->setItemDelegateForColumn(0, m_delegate);
 
-	m_actAddFiles = new QAction("增加音频文件", this);
-	m_actExit = new QAction("退出", this);
-	m_actRemoveFiles = new QAction("移除文件", this);
-	connect(m_actAddFiles, SIGNAL(triggered()), this, SLOT(SlotActTriggered()));
-	connect(m_actExit, SIGNAL(triggered()), this, SLOT(SlotActTriggered()));
-	connect(m_actRemoveFiles, SIGNAL(triggered()), this, SLOT(SlotActTriggered()));
 
-	m_actionGroup = new QActionGroup(this);
-	connect(m_actionGroup, SIGNAL(triggered(QAction*)), this, SLOT(SlotActionGroupTriggered(QAction*)));
-
-	m_btnShowMinimmun = new QPushButton("Hide", this);
-	m_btnStartStop = new QPushButton("Start/Stop", this);
+	m_btnShowMinimmun = new QPushButton("隐藏", this);
+	m_btnStartStop = new QPushButton("开始/暂停", this);
 	m_btnStartStop->setStyleSheet("QPushButton{min-height:10px;}");
 	m_btnShowMinimmun->setStyleSheet("QPushButton{min-height:10px;}");
 	connect(m_btnShowMinimmun, SIGNAL(clicked()), this, SLOT(SlotActTriggered()));
@@ -39,24 +56,16 @@ MiniMusicBox::MiniMusicBox( QWidget *parent /*= NULL*/ )
 	m_slider = new Phonon::SeekSlider(this);
 	m_slider->setMediaObject(m_player->mediaObject());
 
-	LoadSong();
+	LoadSong(m_audioList);
+	m_view->reset();
+
 	QTimer::singleShot(0, this, SLOT(NextSong()));
 }
 
 
 void MiniMusicBox::mousePressEvent( QMouseEvent *event )
 {
-	if (event->button() & Qt::RightButton)
-	{
-		QMenu menu(this);
-		menu.addAction(m_actAddFiles);
-		menu.addSeparator();
-		menu.addActions(m_actionGroup->actions());
-		menu.addSeparator();
-		menu.addAction(m_actRemoveFiles);
-		menu.addAction(m_actExit);
-		QAction *acceptAct = menu.exec(event->globalPos());		
-	}
+
 
 }
 
@@ -64,17 +73,7 @@ void MiniMusicBox::paintEvent( QPaintEvent *event )
 {
 
 	QPainter painter(this);
-	const QString text = QString("关于程序:\n"
-		"最终解释权归: BOY 所有\n"
-		"QQ:3969622**\n\n\n\n\n"
-		"下面我为大家唱一首歌：\n\n你是我的小呀小苹果!!!!"
-		);
-
-	painter.fillRect(rect(), QBrush(QColor(255,210,255, 200)));
-	painter.setPen(QPen(QColor(250,0,0,150)));
-	QRect rect = this->rect();
-	rect.setLeft(50);
-	painter.drawText(rect, Qt::AlignLeft | Qt::AlignVCenter, text);
+	painter.fillRect(rect(), QBrush(QColor(255,210,255)));;
 }
 
 void MiniMusicBox::SlotFinish()
@@ -85,50 +84,19 @@ void MiniMusicBox::SlotFinish()
 void MiniMusicBox::resizeEvent( QResizeEvent *event )
 {
 	m_dlgTitle->setGeometry(0, 0, rect().width(), 22);
-
-	
+	const int margins = 10;
+	int top = m_dlgTitle->geometry().bottom()+4;
+	m_view->setGeometry(margins, top, rect().width()-2*margins, rect().height()- 80);
 	m_slider->setGeometry(10, rect().height()-22, 580, 22);
 
 	int left = m_slider->geometry().right() + 10;
-	m_btnStartStop->setGeometry(left, rect().height()-35, 72, 15);
-	m_btnShowMinimmun->setGeometry(left, rect().height()-19, 72, 15);
+	m_btnStartStop->setGeometry(left, rect().height()-45, 72, 18);
+	m_btnShowMinimmun->setGeometry(left, rect().height()-26, 72, 18);
 }
 
 void MiniMusicBox::SlotActTriggered()
 {
-	if (m_actAddFiles == sender())
-	{
-		AddFilesOrDirectoryDlg dlg(this);
-		QStringList paths = dlg.AddFiles(QStringList() << "*.mp3");
-		bool bNewPath = false;
-		for (int i = 0; i < paths.size(); ++i)
-		{
-			if (!m_songList.contains(paths.at(i)))
-			{
-				QAction *act = new QAction(QFileInfo(paths.at(i)).completeBaseName(), this);
-				act->setCheckable(true);
-				act->setData(paths.at(i));
-				m_actionGroup->addAction(act);
-				bNewPath = true;
-				m_songList.push_back(paths.at(i));
-			}
-
-		}
-		if (bNewPath)
-		{
-			SavePaths();
-		}
-
-	}
-	else if (m_actExit == sender())
-	{
-		hide();
-	}
-	else if (m_actRemoveFiles == sender())
-	{
-
-	}
-	else if (m_btnShowMinimmun == sender())
+	if (m_btnShowMinimmun == sender())
 	{
 		showMinimized();
 	}
@@ -154,62 +122,23 @@ void MiniMusicBox::closeEvent( QCloseEvent *event )
 
 void MiniMusicBox::NextSong()
 {
-	QAction *act = m_actionGroup->checkedAction();
-	QList<QAction*> acts = m_actionGroup->actions();
-	if (acts.isEmpty())
-		return;
-
-	int index = 0;
-	if (act)
+	QString path = m_model->NextFile();
+	if (!path.isEmpty())
 	{
-		index = acts.indexOf(act);
-		++index;
-		index = index % acts.size();
+		m_player->play(Phonon::MediaSource(path));
 	}
-
-	acts.at(index)->setChecked(true);
-	m_player->play(Phonon::MediaSource(acts.at(index)->data().toString()));
+	else
+	{
+		//m_player->play(Phonon::MediaSource(QUrl("http://sc.111ttt.com/up/mp3/403976/23D19644B90448BD07848D721F77E4C9.mp3")));
+		m_player->play(Phonon::MediaSource(m_audioList.at(0).path));
+		m_audioList.SetIndexRunning(0, true);
+	}
+	
 }
 
-void MiniMusicBox::SlotActionGroupTriggered( QAction *act )
-{
-	if (act)
-	{
-		m_player->play(Phonon::MediaSource(act->data().toString()));
-	}
 
-}
 
-void MiniMusicBox::LoadSong()
-{
-	QSettings settings(GetSongSettingPath()+"setting", QSettings::IniFormat);
-	m_songList = settings.value("songlist").toStringList();
 
-	QDir dir(GetSongSettingPath());
-	QFileInfoList infoList = dir.entryInfoList(QStringList()<<"*.mp3",QDir::Files);
-	for (int i = 0; i < infoList.size(); ++i)
-	{
-		QAction *act = new QAction(infoList.at(i).completeBaseName(), this);
-		act->setCheckable(true);
-		act->setData(infoList.at(i).filePath());
-		m_actionGroup->addAction(act);
-	}
-
-	for (int i = m_songList.size()-1; i >= 0; --i)
-	{
-		if (!QFile::exists(m_songList.at(i)))
-		{
-			m_songList.removeOne(m_songList.at(i));
-		}
-	}
-	for (int i = 0; i < m_songList.size(); ++i)
-	{
-		QAction *act = new QAction(QFileInfo(m_songList.at(i)).completeBaseName(), this);
-		act->setCheckable(true);
-		act->setData(m_songList.at(i));
-		m_actionGroup->addAction(act);
-	}
-}
 
 void MiniMusicBox::SlotStateChanged( Phonon::State newState,Phonon::State oldState )
 {
@@ -219,18 +148,19 @@ void MiniMusicBox::SlotStateChanged( Phonon::State newState,Phonon::State oldSta
 	}
 }
 
-void MiniMusicBox::SavePaths()
-{
-	QSettings settings(GetSongSettingPath()+"setting", QSettings::IniFormat);
-	settings.setValue("songlist", m_songList);
-}
+
 
 void MiniMusicBox::Show()
 {
 	//setFixedSize(700, 300);
 	resize(700, 300);
-	move(500, 500);
+	//move(500, 500);
 	show();
+}
+
+void MiniMusicBox::SlotPlay( QString path )
+{
+	m_player->play(Phonon::MediaSource(path));
 }
 
 
@@ -241,7 +171,208 @@ MiniMusicBox* GetMiniMusicBox()
 	if (g_miniMusicBox == NULL)
 	{
 		g_miniMusicBox = new MiniMusicBox();
-		::SetParent(g_miniMusicBox->winId(), FindDesktopWnd());
+		//::SetParent(g_miniMusicBox->winId(), FindDesktopWnd());
 	}
 	return g_miniMusicBox;
 }
+
+AudioPlayListMode::AudioPlayListMode( AudioList *songList, QObject *parent )
+	:QAbstractTableModel(parent)
+	,m_audioList(songList)
+{
+
+}
+
+Qt::ItemFlags AudioPlayListMode::flags( const QModelIndex & index ) const
+{
+	return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
+}
+
+int AudioPlayListMode::columnCount( const QModelIndex & parent /*= QModelIndex() */ ) const
+{
+	return 1;
+}
+
+int AudioPlayListMode::rowCount( const QModelIndex & parent /*= QModelIndex() */ ) const
+{
+	return m_audioList->size();
+}
+
+QVariant AudioPlayListMode::data( const QModelIndex & index, int role /*= Qt::DisplayRole */ ) const
+{
+	int row = index.row();
+	int column = index.column();
+	if (!index.isValid() || row >= m_audioList->size())
+	{
+		return QVariant();
+	}
+
+	if (role == Qt::DisplayRole)
+	{
+		
+		if (row == 0)
+		{
+			return QFileInfo(m_audioList->at(row).path).completeBaseName();
+		}
+		else
+		{
+			return m_audioList->at(row).path;
+		}
+		
+	}
+	else if (role == Qt::EditRole)
+	{
+		return m_audioList->at(row).path;
+	}
+	else if (role == AudioRunning)
+	{
+		return m_audioList->at(row).running;
+	}
+	return QVariant();
+}
+
+bool AudioPlayListMode::setData( const QModelIndex & index, const QVariant & value, int role /*= Qt::EditRole */ )
+{
+	int row = index.row();
+	int column = index.column();
+	if (!index.isValid() || row >= m_audioList->size())
+	{
+		return false;
+	}
+
+	if (role == Qt::DisplayRole)
+	{
+		
+	}
+	else if (role == Qt::EditRole)
+	{
+		
+	}
+	else if (role == AudioRunning)
+	{
+		m_audioList->SetIndexRunning(row, value.toBool());
+	}
+	emit dataChanged(this->index(0,0), this->index(m_audioList->size()-1, 0));
+	return true;
+}
+
+void AudioPlayListMode::AddFiles( QStringList paths )
+{
+	bool bNewPath = false;
+	for (int i = 0; i < paths.size(); ++i)
+	{
+		if (!m_audioList->Contains(paths.at(i)))
+		{
+			m_audioList->AddFile(paths.at(i));
+			bNewPath = true;
+		}
+	}
+	if (bNewPath)
+	{
+		SavePaths(*m_audioList);
+		reset();
+	}
+}
+
+void AudioPlayListMode::RemoveFiles( QStringList paths )
+{
+	m_audioList->RemoveFiles(paths);
+	SavePaths(*m_audioList);
+	reset();
+}
+
+QString AudioPlayListMode::NextFile()
+{
+	return m_audioList->NextFile();
+}
+
+AudioPlayListView::AudioPlayListView( QWidget *parent /*= NULL*/ )
+	:QTableView(parent)
+{
+	verticalHeader()->hide();
+	horizontalHeader()->setStretchLastSection(true);
+	horizontalHeader()->hide();
+	setSelectionMode(QAbstractItemView::ExtendedSelection);
+	connect(this, SIGNAL(doubleClicked(const QModelIndex&)), this, SLOT(SlotDoubleClicked(const QModelIndex&)));
+
+}
+
+void AudioPlayListView::SlotDoubleClicked( const QModelIndex &index )
+{
+	model()->setData(index, true, AudioPlayListMode::AudioRunning);
+	emit SigPlay(model()->data(index, Qt::EditRole).toString());
+}
+
+void AudioPlayListView::mousePressEvent( QMouseEvent *event )
+{
+	QTableView::mousePressEvent(event);
+}
+
+void AudioPlayListView::mouseReleaseEvent( QMouseEvent *event )
+{
+	if (event->button() == Qt::RightButton)
+	{
+		QMenu menu(this);
+
+		QAction *addFiles = menu.addAction("增加文件");
+		QAction *removeFiles = menu.addAction("移除文件");
+
+		QAction *acceptAct = menu.exec(event->globalPos());
+
+		if (acceptAct == addFiles)
+		{
+			emit SigAddFiles();
+		}
+		else if (acceptAct == removeFiles)
+		{
+			QStringList audioPaths;
+			QModelIndexList indexList = selectionModel()->selectedIndexes();
+			for (int i = 0; i < indexList.size(); ++i)
+			{
+				audioPaths << indexList.at(i).data(Qt::EditRole).toString();
+			}
+			emit SigRemoveFiles(audioPaths);
+		}
+	}
+}
+
+void MiniMusicBox::SlotAddFiles(  )
+{
+	AddFilesOrDirectoryDlg dlg(this);
+	QStringList paths = dlg.AddFiles(QStringList() << "*.mp3");
+	m_model->AddFiles(paths);
+}
+
+void MiniMusicBox::SlotRemoveFiles( QStringList paths )
+{
+	m_model->RemoveFiles(paths);
+}
+
+
+AudioPlayListDelegate::AudioPlayListDelegate( QObject *parent /*= NULL*/ )
+	:QItemDelegate(parent)
+{
+	m_runningColor = QColor(255,255,198);
+}
+
+
+void AudioPlayListDelegate::paint( QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index ) const
+{
+
+	bool running = index.data(AudioPlayListMode::AudioRunning).toBool();
+	if (running)
+	{
+		painter->fillRect(option.rect, QBrush(m_runningColor));
+	}
+
+	if (option.state & QStyle::State_Selected)
+	{
+		painter->fillRect(option.rect, option.palette.highlight());
+	}
+
+	QString path = index.data().toString();
+	QRect textRect = option.rect.adjusted(10, 0, 0, 0);
+	painter->drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter,  path);
+}
+
+

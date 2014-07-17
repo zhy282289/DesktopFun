@@ -19,10 +19,11 @@ int main(int argc, char *argv[])
 
 	QString appStyleSheet = "QPushButton{border:1px solid gray; background-color:rgb(250,198,255);min-width:82px;min-height:22px}"
 		"QPushButton:hover{background-color:rgb(250,220,255);}"
-		"QMenu{background-color:white;min-width:200px}"
-		"QMenu:item{background:white;padding: 8px 20px 8px 20px;}"
-		"QMenu:item:selected{ background-color: rgb(255,210,255);}"
-		"QMenu:item:checked{ background-color: rgb(255,230,230);}"
+		"QMenu{background-color:rgb(255,225,226);min-width:200px}"
+		"QMenu:item{background:rgb(255,225,226);padding: 8px 20px 8px 20px;width:180px;}"
+		"QMenu:item:selected,QMenu:item:checked:selected{ background-color: rgb(255,172,251);}"
+		"QMenu:item:checked{ background-color: rgb(255,210,255);}"
+		"QTableView{background-color:rgb(255,210,255); selection-background-color:rgb(255,172,251);}"
 		;
 	a.setStyleSheet(appStyleSheet);
 

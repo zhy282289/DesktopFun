@@ -513,6 +513,7 @@ void DesktopWindow::keyPressEvent( QKeyEvent *event )
 		{
 			HideOrShowWindow(false);
 		}
+		break;
 	case Qt::Key_Delete:
 		{
 			RemoveThisWindow();

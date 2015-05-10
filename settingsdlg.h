@@ -3,16 +3,7 @@
 
 #include <QDialog>
 
-struct BGPixmap
-{
-	QPixmap bgPixmap;
-	QString path;
-};
-struct SettingData
-{
-	QColor color;
-	BGPixmap bgPix;
-};
+
 
 class ColorBtn;
 class PixmapBtn;

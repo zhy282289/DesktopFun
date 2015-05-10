@@ -5,7 +5,9 @@
 
 #include "minimusicbox.h"
 
-DesktopWindow::DesktopWindow( QWidget *parent)
+#include "widgetmovedragcontroller.h"
+
+DesktopWindow::DesktopWindow( const QString &path, QWidget *parent)
 	: QDialog(parent)
 {
 	setObjectName("DesktopWindow");
@@ -14,11 +16,14 @@ DesktopWindow::DesktopWindow( QWidget *parent)
 	//setAttribute(Qt::WA_TranslucentBackground);
 	setAttribute(Qt::WA_OpaquePaintEvent);
 	setMinimumSize(100, 100);
-	setMouseTracking(true);
-
 	::SetParent(winId(), FindDesktopWnd());
 
 	setAcceptDrops(true);
+
+	m_desktopController = new DesktopController(path, this);
+	m_moveDragController = new WidgetMoveDragController(this);
+	m_moveDragController->SetMoveable(m_desktopController->GetWindowMoveable());
+
 
 	// animation
 	m_animateWindow = new QPropertyAnimation(this, "pos", this);
@@ -27,21 +32,15 @@ DesktopWindow::DesktopWindow( QWidget *parent)
 	connect(m_animateWindow, SIGNAL(finished()), this, SLOT(SlotAnimationFinish()));
 
 	// data
-	QSettings settings("DesktopWindow.ini", QSettings::IniFormat);
-	m_bLeftBtnDown = false;
-	m_bMoveWindow = true;
-	m_borderWidth = 4;
 	m_bWindowHadMove = false;
-
-	m_outside = 1;
+	m_outside = 2;
 
 	m_iconSize = QSize(g_iconSize, g_iconSize);
 
 
-	m_saveIntevalTime = 5 * 1000;
-	m_saveDeskTimer = new QTimer(this);
-	m_saveDeskTimer->start(m_saveIntevalTime);
-	connect(m_saveDeskTimer, SIGNAL(timeout()), this, SLOT(SlotSaveDesk()));
+	QTimer *saveDeskTimer = new QTimer(this);
+	saveDeskTimer->start(5 * 1000);
+	connect(saveDeskTimer, SIGNAL(timeout()), this, SLOT(SlotSaveDesk()));
 
 	m_actAddFile = new QAction("增加文件", this);
 	m_actAddDir = new QAction("增加文件夹", this);
@@ -49,36 +48,32 @@ DesktopWindow::DesktopWindow( QWidget *parent)
 	m_actAnchorWindow->setCheckable(true);
 	m_actAnchorItem = new QAction("图标停泊", this);
 	m_actAnchorItem->setCheckable(true);
-
 	m_actAddNewWindow = new QAction("新窗口", this);
 	m_actRemoveNewWindow = new QAction("删除窗口", this);
 	m_actSetting = new QAction("设置", this);
+	QList<QAction*> actObjs;
+	actObjs << m_actAddFile << m_actAddDir << m_actAnchorWindow << m_actAnchorItem << m_actAddNewWindow << m_actRemoveNewWindow << m_actSetting ;
+	foreach(QAction *obj, actObjs)
+		connect(obj, SIGNAL(triggered()), this, SLOT(SlotActTriggered()));	
 
-	connect(m_actAddFile, SIGNAL(triggered()), this, SLOT(SlotActTriggered()));
-	connect(m_actAddDir, SIGNAL(triggered()), this, SLOT(SlotActTriggered()));
-	connect(m_actAnchorWindow, SIGNAL(triggered()), this, SLOT(SlotActTriggered()));
-	connect(m_actAnchorItem, SIGNAL(triggered()), this, SLOT(SlotActTriggered()));
-	connect(m_actAddNewWindow, SIGNAL(triggered()), this, SLOT(SlotActTriggered()));
-	connect(m_actSetting, SIGNAL(triggered()), this, SLOT(SlotActTriggered()));
-	connect(m_actRemoveNewWindow, SIGNAL(triggered()), this, SLOT(SlotActTriggered()));
 }
 
 DesktopWindow::~DesktopWindow()
 {
-	SaveDesk();
+	m_desktopController->Save();
 }
 
 
 void DesktopWindow::SetController( Controller *controller )
 {
-	m_controller = controller;
-	controller->setParent(this);
-	m_items = m_controller->GetItems();
-	m_windowData = m_controller->GetDesktopWindowData();
+	//m_controller = controller;
+	//controller->setParent(this);
+	//m_items = m_controller->GetItems();
+	//m_windowData = m_controller->GetDesktopWindowData();
 
-	// init ui
-	m_actAnchorWindow->setChecked(!m_windowData.bWindowCanMove);
-	m_actAnchorItem->setChecked(!m_windowData.bItemCanMove);
+	//// init ui
+	//m_actAnchorWindow->setChecked(!m_windowData.bWindowCanMove);
+	//m_actAnchorItem->setChecked(!m_windowData.bItemCanMove);
 }
 
 void DesktopWindow::paintEvent( QPaintEvent *event )
@@ -107,56 +102,21 @@ void DesktopWindow::paintEvent( QPaintEvent *event )
 
 void DesktopWindow::mousePressEvent( QMouseEvent *event )
 {
-	if (event->button() == Qt::LeftButton && m_windowData.bWindowCanMove)
-	{
-		m_bLeftBtnDown = true;
-		m_oldPoint = event->pos();
-
-		QRect moveWindowRect = rect().adjusted(m_borderWidth, m_borderWidth, -m_borderWidth, -m_borderWidth);
-		m_bMoveWindow = moveWindowRect.contains(m_oldPoint);
-		if (m_bMoveWindow)
-		{
-			QApplication::setOverrideCursor(Qt::ClosedHandCursor);
-		}
-
-
-	}
 	if (m_windowData.windowHadHide)
-	{
 		HideOrShowWindow(false);
-	}
+
 }
 
 void DesktopWindow::mouseReleaseEvent( QMouseEvent *event )
 {
-	m_bLeftBtnDown = false;
-	QApplication::restoreOverrideCursor();
+	//m_bLeftBtnDown = false;
+	//QApplication::restoreOverrideCursor();
 }
 
 void DesktopWindow::mouseMoveEvent( QMouseEvent *event )
 {
-	if (m_bLeftBtnDown && (m_windowData.bWindowCanMove || WillHideWindow()))
-	{
-		if (m_bMoveWindow)
-		{
-			// 移动 窗口
-			move(event->globalPos() - m_oldPoint);
-			
-		}
-		else
-		{
-			// 拖拽窗口
-			QPoint newPoint = (event->pos());
-			MoveWindow(m_oldPoint, newPoint);		
-			m_oldPoint = newPoint;
-		}
-		update();
-		m_bWindowHadMove = true;
-	}
-	else if (m_windowData.bWindowCanMove && !m_windowData.windowHadHide)
-	{
-		HitSide(event);
-	}
+	update();
+	m_bWindowHadMove = true;
 	QDialog::mouseMoveEvent(event);
 }
 
@@ -164,59 +124,6 @@ void DesktopWindow::mouseMoveEvent( QMouseEvent *event )
 void DesktopWindow::showEvent( QShowEvent *event )
 {
 	QueryDesktopPixmap();
-}
-
-void DesktopWindow::HitSide( QMouseEvent *event )
-{
-	left = top = right = bottom = false;
-	const int margin = m_borderWidth;
-	QRect outRect = this->rect();
-	QPoint pos = event->pos();
-	int x = pos.x();
-	int y = pos.y();
-	if (x < margin)
-		left = true;
-	if (y < margin)
-		top = true;
-	if (x > outRect.right()-margin)
-		right = true;
-	if (y > outRect.bottom()-margin)
-		bottom = true;
-
-	if (left && top)
-		this->setCursor(Qt::SizeFDiagCursor);
-	else if (left && bottom)
-		this->setCursor(Qt::SizeBDiagCursor);
-	else if (right && top)
-		this->setCursor(Qt::SizeBDiagCursor);
-	else if (right && bottom)
-		this->setCursor(Qt::SizeFDiagCursor);
-	else if (left || right)
-		this->setCursor(Qt::SizeHorCursor);
-	else if (top || bottom)
-		this->setCursor(Qt::SizeVerCursor);
-	else
-		this->setCursor(Qt::ArrowCursor);
-
-}
-
-void DesktopWindow::MoveWindow( const QPoint &oldPoint, const QPoint &newPoint )
-{
-	int dx = newPoint.x() - oldPoint.x();
-	int dy = newPoint.y() - oldPoint.y();
-
-	QRect rect = this->geometry();
-
-	if (left)
-		rect.setLeft(rect.x() + dx);
-	if (top)
-		rect.setTop(rect.y() + dy);
-	if (right)
-		rect.setRight(rect.x()+ rect.width()-1 + dx);
-	if (bottom)
-		rect.setBottom(rect.y() + rect.height()-1 + dy);
-	
-	setGeometry(rect);
 }
 
 void DesktopWindow::SlotOpenProcess( QString path )
@@ -239,8 +146,9 @@ void DesktopWindow::SlotActTriggered()
 			data.path = QDir::toNativeSeparators(paths.at(i));
 			QByteArray pathArray = data.path.toLocal8Bit();
 			data.pix = QueryExeIcon(pathArray.data());
-			data.bItemCanMove = m_windowData.bItemCanMove;
-			m_controller->Add(data, this);
+			//data.bItemCanMove = m_windowData.bItemCanMove;
+			m_desktopController->AddItem(data);
+			//m_controller->Add(data, this);
 		}
 	}
 	else if (m_actAddDir == obj)
@@ -256,17 +164,22 @@ void DesktopWindow::SlotActTriggered()
 			data.path = QDir::toNativeSeparators(path);
 			QByteArray pathArray = data.path.toLocal8Bit();
 			data.pix = QueryExeIcon(pathArray.data());
-			m_controller->Add(data, this);
+			//m_controller->Add(data, this);
+			m_desktopController->AddItem(data);
 		}
 	}
 	else if (m_actAnchorWindow == obj)
 	{
-		m_windowData.bWindowCanMove = !m_actAnchorWindow->isChecked();
+		//m_windowData.bWindowCanMove = !m_actAnchorWindow->isChecked();
+		
+		m_moveDragController->SetMoveable(!m_actAnchorWindow->isChecked());
+		m_desktopController->SetWindowMoveable(!m_actAnchorWindow->isChecked());
 	}
 	else if (m_actAnchorItem == obj)
 	{
-		m_windowData.bItemCanMove = !m_actAnchorItem->isChecked();
-		m_controller->SetItemCanMove(m_windowData.bItemCanMove);
+		//m_windowData.bItemCanMove = !m_actAnchorItem->isChecked();
+		//m_controller->SetItemCanMove(m_windowData.bItemCanMove);
+		m_desktopController->SetItemMoveable(!m_actAnchorItem->isChecked());
 	}
 	else if (m_actAddNewWindow == obj)
 	{
@@ -314,8 +227,8 @@ void DesktopWindow::contextMenuEvent( QContextMenuEvent *event )
 
 void DesktopWindow::SlotItemMenu( int menuID )
 {
-	Item *item = qobject_cast<Item*>(sender());
-	m_controller->Remove(item);
+	//Item *item = qobject_cast<Item*>(sender());
+	//m_controller->Remove(item);
 
 }
 
@@ -347,12 +260,11 @@ QColor DesktopWindow::GetBgColor()
 
 void DesktopWindow::SlotSaveDesk()
 {
-	if (m_bWindowHadMove /*&& m_windowData.bWindowCanMove*/)
+	if (m_bWindowHadMove)
 	{
-		SaveDesk();
+		m_desktopController->Save();
 		m_bWindowHadMove = false;
 	}
-	
 }
 
 void DesktopWindow::SlotItemHadMove()
@@ -360,27 +272,18 @@ void DesktopWindow::SlotItemHadMove()
 	m_bWindowHadMove = true;
 }
 
-void DesktopWindow::SaveDesk()
-{
-	m_windowData.rect = geometry();
-	m_controller->SetDesktopWindowData(m_windowData);
-	m_controller->Save();
-}
+//void DesktopWindow::SaveDesk()
+//{
+//	//m_windowData.rect = geometry();
+//	m_desktopController->Save();
+//	//m_controller->SetDesktopWindowData(m_windowData);
+//	//m_controller->Save();
+//}
 
 void DesktopWindow::Show()
 {
-	setGeometry(m_controller->GetDesktopWindowData().rect);
+	setGeometry(m_desktopController->GetWindowGeometry());
 	show();
-}
-
-void DesktopWindow::leaveEvent( QEvent *event )
-{
-	//HideOrShowWindow(true);
-}
-
-void DesktopWindow::enterEvent( QEvent *event )
-{
-	//HideOrShowWindow(false);
 }
 
 void DesktopWindow::HideOrShowWindow( bool hide )
@@ -482,23 +385,7 @@ bool DesktopWindow::AnimationIsRun()
 	return m_animateWindow->state() == QAbstractAnimation::Running;
 }
 
-bool DesktopWindow::MouseInBorder(QPoint point)
-{
-	const int margin = m_borderWidth;
-	QRect outRect = this->rect();
-	QPoint pos = point;
-	int x = pos.x();
-	int y = pos.y();
-	if (x < margin)
-		left = true;
-	if (y < margin)
-		top = true;
-	if (x > outRect.right()-margin)
-		right = true;
-	
-	return left | right | top;
 
-}
 
 void DesktopWindow::keyPressEvent( QKeyEvent *event )
 {
@@ -530,15 +417,7 @@ void DesktopWindow::keyPressEvent( QKeyEvent *event )
 	}
 }
 
-void DesktopWindow::focusOutEvent( QFocusEvent *event )
-{
-	//HideOrShowWindow(true);
-}
 
-void DesktopWindow::focusInEvent( QFocusEvent *event )
-{
-
-}
 
 void DesktopWindow::SlotAnimationFinish()
 {
@@ -549,24 +428,18 @@ void DesktopWindow::SlotAnimationFinish()
 void DesktopWindow::dragEnterEvent( QDragEnterEvent *event )
 {
 	if (event->mimeData()->hasUrls())
-	{
 		event->accept();
-	}
 	else
-	{
 		event->ignore();
-	}
+	
 }
 void DesktopWindow::dragMoveEvent( QDragMoveEvent *event )
 {
 	if (event->mimeData()->hasUrls())
-	{
 		event->accept();
-	}
 	else
-	{
 		event->ignore();
-	}
+	
 }
 void DesktopWindow::dropEvent( QDropEvent *event )
 {
@@ -579,9 +452,9 @@ void DesktopWindow::dropEvent( QDropEvent *event )
 		data.path = QDir::toNativeSeparators(urls.at(i).toLocalFile());
 		QByteArray pathArray = data.path.toLocal8Bit();
 		data.pix = QueryExeIcon(pathArray.data());
-		data.bItemCanMove = m_windowData.bItemCanMove;
-		m_controller->Add(data, this);
-
+		//data.bItemCanMove = m_windowData.bItemCanMove;
+		//m_controller->Add(data, this);
+		m_desktopController->AddItem(data);
 		pos.setX(pos.x() + g_iconSize + 10);
 	}
 }
@@ -591,7 +464,7 @@ void DesktopWindow::SlotSettingChanged( SettingData data )
 	m_windowData.color = data.color;
 	m_windowData.bgPixmap.bgPixmap = data.bgPix.bgPixmap;
 	m_windowData.bgPixmap.path = data.bgPix.path;
-	m_controller->SetItemBGColor(data.color);
+	//m_controller->SetItemBGColor(data.color);
 	update();
 }
 
@@ -609,7 +482,8 @@ void DesktopWindow::RemoveThisWindow()
 	if (i == 2)
 	{
 		hide();
-		QFile::remove(m_controller->GetSavePath());
+		m_desktopController->RemveWindow();
+		//QFile::remove(m_desktopController->GetSavePath());
 	}
 }
 
@@ -623,51 +497,3 @@ void DesktopWindow::mouseDoubleClickEvent( QMouseEvent *event )
 
 
 
-
-
-
-
-QDataStream &operator<<(QDataStream &out, const DesktopWindowData &data)
-{
-	return out << data.rect << data.bWindowCanMove << data.bItemCanMove << data.windowHadHide << data.color << data.bgPixmap.path;
-}
-QDataStream &operator>>(QDataStream &in, DesktopWindowData &data)
-{
-	return in >> data.rect >> data.bWindowCanMove >> data.bItemCanMove >> data.windowHadHide >> data.color >> data.bgPixmap.path;
-}
-
-HandleWidget::HandleWidget( QWidget *parent /*= NULL*/ )
-	:QWidget(parent)
-{
-	setWindowFlags(Qt::FramelessWindowHint);
-	setFixedSize(15, 30);
-	setFocusPolicy(Qt::NoFocus);
-	m_bgColor = QColor(0, 250, 250, 50);
-}
-
-void HandleWidget::paintEvent( QPaintEvent *event )
-{
-	QPixmap desktopPixmap = QueryDesktopPixmap();
-	QRect srctRect = geometry();
-	QRect destRect = rect();
-	QPainter painter(this);
-	painter.drawPixmap(destRect, desktopPixmap, srctRect);
-	painter.fillRect(rect(), QBrush(m_bgColor));
-}
-
-void HandleWidget::mousePressEvent( QMouseEvent *event )
-{
-	Hide();
-	emit clicked();
-}
-
-void HandleWidget::Move( QPoint point )
-{
-	move(point);
-	show();
-}
-
-void HandleWidget::Hide()
-{
-	hide();
-}

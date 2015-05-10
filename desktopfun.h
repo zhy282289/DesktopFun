@@ -4,34 +4,13 @@
 #include <QtGui/QWidget>
 #include <QDialog>
 #include <QSize>
+
 #include "item.h"
 #include "settingsDlg.h"
 
 
-
-struct DesktopWindowData
-{
-	QRect   rect;
-	bool	bWindowCanMove;
-	bool	bItemCanMove;
-	bool	windowHadHide;
-	QColor	color;
-	BGPixmap bgPixmap;
-
-	DesktopWindowData()
-	{
-		bWindowCanMove = true;
-		bItemCanMove = true;
-		windowHadHide = false;
-		color = QColor(250, 20, 80, 150);
-	}
-};
-
-Q_DECLARE_METATYPE(DesktopWindowData)
-QDataStream &operator<<(QDataStream &out, const DesktopWindowData &data);
-QDataStream &operator>>(QDataStream &in, DesktopWindowData &data);
-
-
+class WidgetMoveDragController;
+class DesktopController;
 class Controller;
 class HandleWidget;
 class DesktopWindow : public QDialog
@@ -39,7 +18,7 @@ class DesktopWindow : public QDialog
 	Q_OBJECT
 
 public:
-	DesktopWindow(QWidget *parent = 0);
+	DesktopWindow(const QString &path, QWidget *parent = 0);
 	~DesktopWindow();
 
 	void SetController(Controller *controller);
@@ -54,8 +33,8 @@ public:
 
 
 private slots:
-	void SlotOpenProcess(QString path);
 	void SlotActTriggered();
+	void SlotOpenProcess(QString path);
 	void SlotItemMenu(int menuID);
 	void SlotItemHadMove();
 	void SlotSaveDesk();
@@ -63,13 +42,10 @@ private slots:
 	void SlotSettingChanged(SettingData data);
 
 private:
-	void HitSide( QMouseEvent *event);
-	void MoveWindow(const QPoint &oldPoint, const QPoint &newPoint);
 	void SetCanMove(bool canMove);
-	void SaveDesk();
+	//void SaveDesk();
 	bool WillHideWindow();
 	bool AnimationIsRun();
-	bool MouseInBorder(QPoint point);
 	void HideOrShowWindow(bool hide);
 	void RemoveThisWindow();
 
@@ -81,10 +57,6 @@ protected:
 	void mouseDoubleClickEvent(QMouseEvent *event);
 	void showEvent(QShowEvent *event);
 	void contextMenuEvent(QContextMenuEvent *event);
-	void focusOutEvent(QFocusEvent *event);
-	void focusInEvent(QFocusEvent *event);
-	void leaveEvent(QEvent *event);
-	void enterEvent(QEvent *event);
 	void keyPressEvent(QKeyEvent *event);
 
 	void dragEnterEvent(QDragEnterEvent *event);
@@ -92,12 +64,12 @@ protected:
 	void dropEvent(QDropEvent *event);
 
 private:
-	bool	m_bLeftBtnDown;
-	QPoint  m_oldPoint;
-	Controller *m_controller;
-	QList<Item*> *m_items;
+	WidgetMoveDragController *m_moveDragController;
+	DesktopController *m_desktopController;
 
-	
+	Controller *m_controller;
+//	QList<Item*> *m_items;
+
 	QAction	*m_actAddFile;
 	QAction	*m_actAddDir;
 	QAction	*m_actAnchorWindow;
@@ -107,44 +79,16 @@ private:
 	QAction	*m_actSetting;
 
 private:
-	// settings
-	bool	m_bMoveWindow;
-	int		m_borderWidth;
 	bool	m_bWindowHadMove;
-	int		left;
-	int		right;
-	int		top;
-	int		bottom;
-
 	DesktopWindowData	m_windowData;
 	QSize	m_iconSize;
-	QTimer	*m_saveDeskTimer;
-	int		m_saveIntevalTime;
+	
 	int		m_outside;
 private:
 	// animation
 	QPropertyAnimation	*m_animateWindow;
 };
 
-
-class HandleWidget : public QWidget
-{
-	Q_OBJECT
-public:
-	HandleWidget(QWidget *parent = NULL);
-
-	void Move(QPoint point);
-	void Hide();
-
-signals:
-	void clicked();
-
-protected:
-	void paintEvent(QPaintEvent *event);
-	void mousePressEvent(QMouseEvent *event);
-
-	QColor m_bgColor;
-};
 
 
 #endif // DESKTOPFUN_H

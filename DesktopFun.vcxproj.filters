@@ -74,15 +74,6 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="application.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_application.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_application.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
     <ClCompile Include="settingsdlg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -101,6 +92,9 @@
     <ClCompile Include="GeneratedFiles\Release\moc_minimusicbox.cpp">
       <Filter>Generated Files\Release</Filter>
     </ClCompile>
+    <ClCompile Include="widgetmovedragcontroller.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="desktopfun.h">
@@ -118,9 +112,6 @@
     <CustomBuild Include="data.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="application.h">
-      <Filter>Header Files</Filter>
-    </CustomBuild>
     <CustomBuild Include="settingsdlg.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
@@ -130,6 +121,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="widgetmovedragcontroller.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

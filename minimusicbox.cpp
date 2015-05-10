@@ -22,13 +22,19 @@ void SavePaths(const AudioList &audioList)
 }
 
 //////////////////////////////////////////////////////////////////////////
+#include "widgetmovedragcontroller.h"
 MiniMusicBox::MiniMusicBox( QWidget *parent /*= NULL*/ )
 	:QLabel(parent)
 {
+	WidgetMoveDragController *moveDragController = new WidgetMoveDragController(this);
+
+
+
 	setWindowFlags( Qt::Dialog | Qt::FramelessWindowHint);
 	//setAttribute(Qt::WA_DeleteOnClose);
 	setAttribute(Qt::WA_TranslucentBackground);
-	setFixedSize(700, 300);
+	resize(700, 300);
+	setMinimumSize(50,50);
 	m_dlgTitle = new DialogTitle(this);
 	m_dlgTitle->setText(" Ã×Äã²¥·ÅÆ÷");
 
@@ -87,7 +93,7 @@ void MiniMusicBox::resizeEvent( QResizeEvent *event )
 	const int margins = 10;
 	int top = m_dlgTitle->geometry().bottom()+4;
 	m_view->setGeometry(margins, top, rect().width()-2*margins, rect().height()- 80);
-	m_slider->setGeometry(10, rect().height()-22, 580, 22);
+	m_slider->setGeometry(10, rect().height()-22, rect().width()-10-10-100, 22);
 
 	int left = m_slider->geometry().right() + 10;
 	m_btnStartStop->setGeometry(left, rect().height()-45, 72, 18);
@@ -133,7 +139,7 @@ void MiniMusicBox::NextSong()
 		m_player->play(Phonon::MediaSource(m_audioList.at(0).path));
 		m_audioList.SetIndexRunning(0, true);
 	}
-	
+
 }
 
 
@@ -209,7 +215,7 @@ QVariant AudioPlayListMode::data( const QModelIndex & index, int role /*= Qt::Di
 
 	if (role == Qt::DisplayRole)
 	{
-		
+
 		if (row == 0)
 		{
 			return QFileInfo(m_audioList->at(row).path).completeBaseName();
@@ -218,7 +224,7 @@ QVariant AudioPlayListMode::data( const QModelIndex & index, int role /*= Qt::Di
 		{
 			return m_audioList->at(row).path;
 		}
-		
+
 	}
 	else if (role == Qt::EditRole)
 	{
@@ -242,11 +248,11 @@ bool AudioPlayListMode::setData( const QModelIndex & index, const QVariant & val
 
 	if (role == Qt::DisplayRole)
 	{
-		
+
 	}
 	else if (role == Qt::EditRole)
 	{
-		
+
 	}
 	else if (role == AudioRunning)
 	{

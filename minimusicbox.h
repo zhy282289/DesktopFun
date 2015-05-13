@@ -131,13 +131,8 @@ private:
 	Phonon::VideoPlayer *m_player;
 	Phonon::SeekSlider *m_slider;
 	DialogTitle		*m_dlgTitle;
-	//QActionGroup	*m_actionGroup;
-	//QStringList		m_audioList;
 	qint64			m_curFrames;
 private:
-	//QAction		*m_actAddFiles;
-	//QAction		*m_actExit;
-	//QAction		*m_actRemoveFiles;
 	QPushButton	*m_btnShowMinimmun;
 	QPushButton	*m_btnStartStop;
 

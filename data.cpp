@@ -92,14 +92,43 @@ static BOOL enumUserWindowsCB(HWND hwnd,LPARAM lParam)
 	return FALSE;
 }
 
+
 HWND FindDesktopWnd()
+{
+	HWND hwnd = FindDesktopWndWin7();
+	if (!hwnd)
+		hwnd = FindDesktopWndXP();
+
+	return hwnd;
+
+}
+
+HWND FindDesktopWndXP()
 {
 	//HWND resultHwnd = NULL;
 	//EnumWindows((WNDENUMPROC)enumUserWindowsCB, (LPARAM)&resultHwnd);
 	//return resultHwnd;
-
-	return FindWindowEx(::FindWindowEx(::FindWindow(TEXT("Progman"), TEXT("Program Manager")), NULL, TEXT("SHELLDLL_DefView"), TEXT("")), NULL, TEXT("SysListView32"), TEXT("FolderView"));
+	HWND hwnd =FindWindowEx(::FindWindowEx(::FindWindow(TEXT("Progman"), TEXT("Program Manager")), NULL, TEXT("SHELLDLL_DefView"), TEXT("")), NULL, TEXT("SysListView32"), TEXT("FolderView")); 
+	return hwnd;
 }
+
+
+HWND FindDesktopWndWin7()
+{
+	HWND dwndparent;
+	HWND dwndviem=NULL;
+	HWND dwdesktopicon;
+	dwndparent=FindWindowEx(0,0,"WorkerW","");//获得第一个WorkerW类的窗口
+	while((!dwndviem)&&dwndparent)
+	{
+		dwndviem=FindWindowEx(dwndparent,0,"SHELLDLL_DefView",0);
+		dwndparent=FindWindowEx(0,dwndparent,"WorkerW","");
+	}
+	dwdesktopicon=FindWindowEx(dwndviem,0,"SysListView32","FolderView");
+	return dwdesktopicon;
+}
+
+
 
 QPixmap *g_desktopPixmap = NULL;
 QPixmap QueryDesktopPixmap()
@@ -107,7 +136,9 @@ QPixmap QueryDesktopPixmap()
 	if (g_desktopPixmap == NULL)
 	{
 		g_desktopPixmap = new QPixmap;
-		*g_desktopPixmap = QPixmap::grabWindow(FindDesktopWnd());
+		QSettings settings("HKEY_CURRENT_USER\\Control Panel\\Desktop\\", QSettings::NativeFormat);
+		QString wallpaper = settings.value("Wallpaper").toString();
+		g_desktopPixmap->load(wallpaper);
 	}
 
 	return *g_desktopPixmap;

@@ -20,15 +20,10 @@ struct SettingData
 // 一个程序图标数据
 struct ItemData
 {
-	int id;
+	QString id;			// id
 	QString path;	// 图标路径
 	QRect rect;		// 图标大小
 	QPixmap pix;	// 图标
-	//bool bItemCanMove;	// 是否能移动
-	//ItemData()
-	//{
-	//	bItemCanMove = true;
-	//}
 };
 
 Q_DECLARE_METATYPE(ItemData)
@@ -42,7 +37,7 @@ QDataStream &operator>>(QDataStream &in, ItemData &data);
 // 一个窗口的所有数据
 struct DesktopWindowData
 {
-	int id;
+	QString id;				// id
 	QString path;			// desktop pixmap path
 	QRect   rect;			// window position and size
 	bool	bWindowCanMove;	// window can move
@@ -77,7 +72,10 @@ QString GetSongSettingPath();
 
 QString GetDefaultSaveDeskName();
 
+
 HWND FindDesktopWnd();
+HWND FindDesktopWndXP();
+HWND FindDesktopWndWin7();
 
 void CreateNewDesktopWindow();
 void CreateNewDesktopWindow(const QString &path);

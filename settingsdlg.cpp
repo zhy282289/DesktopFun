@@ -4,10 +4,10 @@
 SettingsDlg::SettingsDlg(QWidget *parent)
 	: QDialog(parent)
 {
-	setWindowTitle("设置");
+	setWindowTitle(tr("settings"));
 	setAttribute(Qt::WA_DeleteOnClose);
 	setWindowFlags(Qt::Dialog | Qt::FramelessWindowHint);
-	resize(680, 590);
+	resize(450, 400);
 
 	m_dialogTitle = new DialogTitle(this);	
 	m_sliderOpacity = new QSlider(Qt::Horizontal, this);
@@ -25,7 +25,7 @@ SettingsDlg::SettingsDlg(QWidget *parent)
 	connect(m_btnColor, SIGNAL(clicked()), this, SLOT(SlotTriggered()));
 	connect(m_btnBgPix, SIGNAL(clicked()), this, SLOT(SlotTriggered()));
 
-	QPushButton *btnClose = new QPushButton("关闭", this);
+	QPushButton *btnClose = new QPushButton(tr("close"), this);
 	btnClose->setFixedWidth(65);
 	connect(btnClose, SIGNAL(clicked()), this, SLOT(close()));
 
@@ -125,7 +125,7 @@ QColor ColorBtn::GetColor()
 void ColorBtn::paintEvent( QPaintEvent *event )
 {
 	QPainter painter(this);
-	painter.drawText(rect(), Qt::AlignCenter, "选择背景颜色");
+	painter.drawText(rect(), Qt::AlignCenter, tr("select background color"));
 	painter.fillRect(rect(), QBrush(m_color));
 }
 
@@ -155,7 +155,7 @@ void PixmapBtn::paintEvent( QPaintEvent *event )
 {
 	QPainter painter(this);
 	painter.fillRect(rect(), QBrush(QColor(250, 120, 120, 50)));
-	painter.drawText(rect(), Qt::AlignCenter, "选择背景图片");
+	painter.drawText(rect(), Qt::AlignCenter, tr("select background image"));
 	QPixmap pixmap = m_pixmap.scaled(rect().size(), Qt::KeepAspectRatio);
 	painter.drawPixmap(pixmap.rect(), pixmap, pixmap.rect());
 }
@@ -208,7 +208,7 @@ AddFilesOrDirectoryDlg::AddFilesOrDirectoryDlg( QWidget *parent /*= NULL*/ )
 
 QStringList AddFilesOrDirectoryDlg::AddFiles(QStringList filters)
 {
-	m_dlgTitle->setText(" 选择文件");
+	m_dlgTitle->setText(tr(" select file"));
 	m_fileDlg->setAcceptMode(QFileDialog::AcceptOpen);
 	m_fileDlg->setFileMode(QFileDialog::ExistingFiles);
 	m_fileDlg->setNameFilters(filters);
@@ -218,7 +218,7 @@ QStringList AddFilesOrDirectoryDlg::AddFiles(QStringList filters)
 
 QString AddFilesOrDirectoryDlg::AddDirectory()
 {
-	m_dlgTitle->setText(" 选择文件夹");
+	m_dlgTitle->setText(" select directory");
 	m_fileDlg->setAcceptMode(QFileDialog::AcceptOpen);
 	m_fileDlg->setFileMode(QFileDialog::Directory);
 	m_fileDlg->setOption(QFileDialog::ShowDirsOnly);
@@ -244,13 +244,13 @@ MsgBox::MsgBox( QWidget *parent /*= NULL*/ )
 	:QDialog(parent)
 {
 	setWindowFlags(Qt::Dialog | Qt::FramelessWindowHint);
-	resize(600, 270);
+	resize(480, 150);
 
 	m_lbText = new QLabel(this);
 	m_lbText->setAlignment(Qt::AlignCenter);
 	m_lbText->setStyleSheet("QLabel{background-color:rgb(250,120,120)}");
-	m_btnYes = new QPushButton("确定", this);
-	m_btnNo = new QPushButton("取消", this);
+	m_btnYes = new QPushButton(tr("yes"), this);
+	m_btnNo = new QPushButton(tr("no"), this);
 	connect(m_btnYes, SIGNAL(clicked()), this, SLOT(SlotBtnClicked()));
 	connect(m_btnNo, SIGNAL(clicked()), this, SLOT(SlotBtnClicked()));
 	

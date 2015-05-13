@@ -2,41 +2,12 @@
 #define CONTROLLER_H
 
 #include <QObject>
+#include <QRect>
+#include <QPixmap>
+#include <QColor>
 
 #include "item.h"
 #include "desktopfun.h"
-//
-//class Controller : public QObject
-//{
-//	Q_OBJECT
-//
-//public:
-//	Controller(QObject *parent = NULL);
-//	~Controller();
-//
-//	QList<Item*> *Load(const QString &filePath, QWidget *parent);
-//
-//
-//	QList<Item*> *GetItems();
-//	
-//	DesktopWindowData GetDesktopWindowData();
-//	void SetDesktopWindowData(const DesktopWindowData &data);
-//	void Save();
-//	void Add(const ItemData &data, QWidget *parent);
-//	void Remove(Item *item);
-//	void RemoveAll();
-//	void SetItemCanMove(bool move);
-//	void SetItemBGColor(QColor color);
-//	QString GetSavePath();
-//
-//private:
-//	QList<Item*>	m_items;
-//	DesktopWindowData m_desktopWindowData;
-//	QString m_savePath;
-//};
-//
-//Controller* GetController(QObject *parent = NULL);
-#include <QRect>
 
 class DesktopController : public QObject
 {
@@ -50,14 +21,26 @@ public:
 	void SetItemMoveable(bool moveable);
 	bool GetItemMoveable();
 	QRect GetWindowGeometry();
-	void RemveWindow();
-	void Save();
+	void RemoveWindow();
+
+	//
+	QPixmap GetWindowBgPixmap();
+	void SetWindowBgPixmap(const BGPixmap &pixmap);
+	QColor GetWindowBgColor();
+	void SetWindowBgColor(const QColor &color);
+	bool IsWindowVisiable();
+	void SetWindowVisiable(bool visiable);
+
+public slots:
+	void SaveState();
 private:
 	bool Load(const QString &path);
 	void _AddItem(ItemData &item);
-	
+private slots:
+	void DeleteLaterSlot(QString id);
+
 private:
-	QWidget *m_parent;
+	DesktopWindow *m_parent;
 	QString m_savePath;
 	DesktopWindowData m_desktopWindowData;
 };

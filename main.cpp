@@ -26,16 +26,16 @@ int main(int argc, char *argv[])
 		;
 	a.setStyleSheet(appStyleSheet);
 
+	QString fff =QApplication::applicationDirPath();
+	a.addLibraryPath(QApplication::applicationDirPath()+"/codecs/");
+
 	QString path = GetPageSettingPath();
 	QDir dir(path);
 	QFileInfoList infoList = dir.entryInfoList(QStringList() << "*.desk", QDir::Files);
 	for (int i = 0; i < infoList.size(); ++i)
 	{
 		const QString &filePath = infoList.at(i).absoluteFilePath();
-		//Controller *controller = new Controller;
 		DesktopWindow *window = new DesktopWindow(filePath);
-		//controller->Load(filePath, window);
-		//window->SetController(controller);
 		window->Show();
 
 	}

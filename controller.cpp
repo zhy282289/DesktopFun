@@ -108,9 +108,13 @@ void DesktopController::DeleteLaterSlot( QString id )
 	}
 }
 
-QPixmap DesktopController::GetWindowBgPixmap()
+BGPixmap DesktopController::GetWindowBgPixmap()
 {
-	return !m_desktopWindowData.bgPixmap.bgPixmap.isNull() ?  m_desktopWindowData.bgPixmap.bgPixmap: QueryDesktopPixmap();
+	BGPixmap bgPixmap;
+	bgPixmap.bgPixmap = !m_desktopWindowData.bgPixmap.bgPixmap.isNull() ?  m_desktopWindowData.bgPixmap.bgPixmap: QueryDesktopPixmap();
+	bgPixmap.path = m_desktopWindowData.bgPixmap.path;
+	return bgPixmap;
+	//return !m_desktopWindowData.bgPixmap.bgPixmap.isNull() ?  m_desktopWindowData.bgPixmap.bgPixmap: QueryDesktopPixmap();
 }
 
 bool DesktopController::IsWindowVisiable()

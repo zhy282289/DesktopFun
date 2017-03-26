@@ -72,9 +72,11 @@ void SettingsDlg::SlotTriggered()
 	}
 	else if (sender() == m_btnBgPix)
 	{
-		QString pixmapPath = QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, "select pixmap", "./", "Images (*.*)"));
+		static QString dirPath;
+		QString pixmapPath = QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, "select pixmap", dirPath, "Images (*.*)"));
 		if (!pixmapPath.isEmpty())
 		{
+			dirPath = QFileInfo(pixmapPath).absolutePath();
 			QImage image;
 			bool bimage = image.load(pixmapPath);
 			m_data.bgPix.bgPixmap = QPixmap::fromImage(image);

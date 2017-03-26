@@ -14,7 +14,6 @@ int main(int argc, char *argv[])
 	QApplication a(argc, argv);
 	
 	QTextCodec::setCodecForCStrings(QTextCodec::codecForName("gb18030"));
-
 	
 	QString appStyleSheet = "QPushButton{border:1px solid gray; background-color:rgb(250,198,255);min-width:82px;min-height:22px}"
 		"QPushButton:hover{background-color:rgb(250,220,255);}"

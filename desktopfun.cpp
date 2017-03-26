@@ -56,14 +56,22 @@ DesktopWindow::~DesktopWindow()
 	
 }
 
+static QPixmap sScalePixmap2Screen(QPixmap &pixmap)
+{
+	QPixmap tempPixmap = pixmap;
+	QRect srceenRect = qApp->desktop()->availableGeometry();
+	if (pixmap.width() > srceenRect.width())
+		tempPixmap = tempPixmap.scaled(srceenRect.width(), srceenRect.height(), Qt::KeepAspectRatioByExpanding);
+	return tempPixmap;
+}
 
 void DesktopWindow::paintEvent( QPaintEvent *event )
 {
 	//if (m_desktopController->IsWindowVisiable())
 	//{
 		QPainter painter(this);
-		QPixmap desktopPixmap = m_desktopController->GetWindowBgPixmap();
-		painter.drawPixmap(rect(), desktopPixmap, geometry());
+		QPixmap desktopPixmap = m_desktopController->GetWindowBgPixmap().bgPixmap;
+		painter.drawPixmap(rect(), sScalePixmap2Screen(desktopPixmap), geometry());
 		painter.fillRect(rect(), QBrush(m_desktopController->GetWindowBgColor()));
 	//}
 	//else
@@ -157,7 +165,7 @@ void DesktopWindow::SlotActTriggered()
 
 		SettingData data;
 		data.color = m_desktopController->GetWindowBgColor();
-		data.bgPix.bgPixmap = m_desktopController->GetWindowBgPixmap();
+		data.bgPix = m_desktopController->GetWindowBgPixmap();
 		settingDlg->Show(data);
 	}
 }
@@ -218,8 +226,17 @@ void DesktopWindow::HideOrShowWindow( bool hide )
 		}
 		else if (top)
 		{
+			int specify = m_outside;
+			OSVERSIONINFOEX osinfo;
+			osinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+			if (::GetVersionExA((OSVERSIONINFO*)&osinfo))
+			{
+				if (QString("%1.%2").arg(osinfo.dwMajorVersion).arg(osinfo.dwMinorVersion).toFloat()>=6.19)
+					specify = 10;
+			}
+
 			m_animateWindow->setStartValue(pos);
-			m_animateWindow->setEndValue(QPoint(pos.x(), -geometry().height() + m_outside));
+			m_animateWindow->setEndValue(QPoint(pos.x(), -geometry().height() + specify));
 			m_animateWindow->start();
 		}
 		else if (right)
@@ -352,6 +369,7 @@ void DesktopWindow::SlotSettingChanged( SettingData data )
 	bgPixmap.bgPixmap = data.bgPix.bgPixmap;
 	bgPixmap.path = data.bgPix.path;
 	m_desktopController->SetWindowBgPixmap(bgPixmap);
+	m_desktopController->SaveState();
 	update();
 }
 

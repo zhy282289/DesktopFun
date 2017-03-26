@@ -24,7 +24,7 @@ public:
 	void RemoveWindow();
 
 	//
-	QPixmap GetWindowBgPixmap();
+	BGPixmap GetWindowBgPixmap();
 	void SetWindowBgPixmap(const BGPixmap &pixmap);
 	QColor GetWindowBgColor();
 	void SetWindowBgColor(const QColor &color);
